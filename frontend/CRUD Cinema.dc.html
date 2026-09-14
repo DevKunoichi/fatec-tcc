@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+html, body { margin: 0; padding: 0; background: #0C0C0F; }
+* { box-sizing: border-box; }
+input, select, button, textarea { font-family: inherit; }
+a { color: #E8B44C; text-decoration: none; }
+a:hover { color: #F5CE83; }
+::placeholder { color: #6C6873; }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
+@keyframes toastIn { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+</style>
+</helmet>
+<div style="min-width: 1280px; min-height: 100vh; display: grid; grid-template-columns: 248px 1fr; background: #0C0C0F; color: #F2EFE9; font-family: 'DM Sans', sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased;">
+
+  <aside style="border-right: 1px solid rgba(255,255,255,.07); background: #101014; display: flex; flex-direction: column; padding: 26px 18px; gap: 30px; position: sticky; top: 0; height: 100vh;">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px;">
+      <div style="width: 10px; height: 10px; border-radius: 50%; background: {{ accent }}; box-shadow: 0 0 14px 2px rgba(232,180,76,.45);"></div>
+      <div style="font-family: 'Instrument Serif', serif; font-size: 22px; letter-spacing: .01em;">Cine Novelino</div>
+    </div>
+
+    <nav style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #6C6873; padding: 0 8px 10px;">Cadastros</div>
+      <sc-for list="{{ nav }}" as="item" hint-placeholder-count="3">
+        <button onClick="{{ item.go }}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; width: 100%; border: 0; cursor: pointer; padding: 11px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; background: {{ item.bg }}; color: {{ item.fg }}; transition: background .15s, color .15s;" style-hover="background: rgba(255,255,255,.05)">
+          <span style="display: flex; align-items: center; gap: 11px;">
+            <span style="width: 3px; height: 16px; border-radius: 2px; background: {{ item.mark }};"></span>
+            {{ item.label }}
+          </span>
+          <span style="font-size: 11.5px; color: #6C6873; font-variant-numeric: tabular-nums;">{{ item.count }}</span>
+        </button>
+      </sc-for>
+
+      <div style="font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #6C6873; padding: 22px 8px 10px;">Operação</div>
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div style="display: flex; align-items: center; gap: 11px; padding: 11px 12px; color: #56525C; font-size: 14px;"><span style="width: 3px; height: 16px;"></span>Venda de ingressos</div>
+        <div style="display: flex; align-items: center; gap: 11px; padding: 11px 12px; color: #56525C; font-size: 14px;"><span style="width: 3px; height: 16px;"></span>Balcão de snacks</div>
+        <div style="display: flex; align-items: center; gap: 11px; padding: 11px 12px; color: #56525C; font-size: 14px;"><span style="width: 3px; height: 16px;"></span>Relatórios</div>
+      </div>
+    </nav>
+
+    <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,.07); padding-top: 16px; display: flex; align-items: center; gap: 11px;">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: #24242B; display: grid; place-items: center; font-size: 12px; font-weight: 500; color: #C9C4BC;">AP</div>
+      <div style="line-height: 1.3;">
+        <div style="font-size: 13px;">Andresa Paula</div>
+        <div style="font-size: 11.5px; color: #6C6873;">Gerente do cinema</div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="padding: 30px 38px 56px; max-width: 1400px;">
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 26px; border-bottom: 1px solid rgba(255,255,255,.07);">
+      <div>
+        <div style="font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: #6C6873; margin-bottom: 9px;">{{ pageKicker }}</div>
+        <h1 style="margin: 0; font-family: 'Instrument Serif', serif; font-size: 38px; font-weight: 400; letter-spacing: -.01em;">{{ pageTitle }}</h1>
+        <p style="margin: 8px 0 0; color: #8B8790; font-size: 14px; max-width: 620px; text-wrap: pretty;">{{ pageDesc }}</p>
+      </div>
+      <button onClick="{{ onNew }}" style="flex: none; border: 0; cursor: pointer; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #14140F; background: {{ accent }}; display: flex; align-items: center; gap: 9px;" style-hover="filter: brightness(1.08)">
+        <span style="font-size: 17px; line-height: 1; margin-top: -2px;">+</span>{{ newLabel }}
+      </button>
+    </header>
+
+    <section style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 26px 0;">
+      <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="3">
+        <div style="border: 1px solid rgba(255,255,255,.07); background: #131317; border-radius: 12px; padding: 18px 20px;">
+          <div style="font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873;">{{ m.label }}</div>
+          <div style="display: flex; align-items: baseline; gap: 9px; margin-top: 10px;">
+            <div style="font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums;">{{ m.value }}</div>
+            <div style="font-size: 12.5px; color: {{ m.hintColor }};">{{ m.hint }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="border: 1px solid rgba(255,255,255,.07); background: #131317; border-radius: 14px; overflow: hidden;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.07);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 9px; background: #0E0E12; border: 1px solid rgba(255,255,255,.09); border-radius: 8px; padding: 9px 12px; width: 300px;">
+            <span style="color: #6C6873; font-size: 13px;">⌕</span>
+            <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ searchPlaceholder }}" style="flex: 1; background: transparent; border: 0; outline: none; color: #F2EFE9; font-size: 13.5px;" />
+          </div>
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+            <button onClick="{{ f.go }}" style="border: 1px solid {{ f.border }}; background: {{ f.bg }}; color: {{ f.fg }}; cursor: pointer; padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;" style-hover="border-color: rgba(255,255,255,.22)">{{ f.label }}</button>
+          </sc-for>
+        </div>
+        <div style="font-size: 12.5px; color: #6C6873; font-variant-numeric: tabular-nums;">{{ resultCount }}</div>
+      </div>
+
+      <sc-if value="{{ isSessoes }}" hint-placeholder-val="{{ true }}">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="text-align: left;">
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Filme</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Sala</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Data / horário</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Class.</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Ocupação</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Situação</th>
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ sessoes }}" as="s" hint-placeholder-count="6">
+              <tr style="border-bottom: 1px solid rgba(255,255,255,.05);" style-hover="background: rgba(255,255,255,.022)">
+                <td style="padding: 15px 20px;">
+                  <div style="font-size: 14.5px; font-weight: 500;">{{ s.filme }}</div>
+                  <div style="font-size: 12px; color: #6C6873; margin-top: 3px;">{{ s.tipo }} · {{ s.duracao }} min</div>
+                </td>
+                <td style="padding: 15px 14px; color: #C9C4BC;">{{ s.sala }}</td>
+                <td style="padding: 15px 14px; font-variant-numeric: tabular-nums; color: #C9C4BC;">{{ s.data }} <span style="color: #6C6873;">·</span> {{ s.hora }}</td>
+                <td style="padding: 15px 14px;">
+                  <span style="display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: #14140F; background: {{ s.classCor }};">{{ s.classificacao }}</span>
+                </td>
+                <td style="padding: 15px 14px; width: 168px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.09); overflow: hidden;">
+                      <div style="height: 100%; width: {{ s.ocupPct }}; background: {{ s.ocupCor }};"></div>
+                    </div>
+                    <span style="font-size: 12.5px; color: #8B8790; font-variant-numeric: tabular-nums; width: 62px;">{{ s.ocupacao }}</span>
+                  </div>
+                </td>
+                <td style="padding: 15px 14px;">
+                  <span style="display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{ s.statusBg }}; color: {{ s.statusFg }};">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: {{ s.statusFg }};"></span>{{ s.status }}
+                  </span>
+                </td>
+                <td style="padding: 15px 20px; text-align: right; white-space: nowrap;">
+                  <button onClick="{{ s.edit }}" style="border: 1px solid rgba(255,255,255,.12); background: transparent; color: #C9C4BC; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px; margin-right: 7px;" style-hover="border-color: rgba(255,255,255,.3); color: #F2EFE9">Editar</button>
+                  <button onClick="{{ s.del }}" style="border: 1px solid rgba(224,91,74,.28); background: transparent; color: #E07A6B; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px;" style-hover="background: rgba(224,91,74,.12)">Excluir</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </sc-if>
+
+      <sc-if value="{{ isProdutos }}" hint-placeholder-val="{{ false }}">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="text-align: left;">
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Produto</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Categoria</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Preço</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Estoque</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Mínimo</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Situação</th>
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ produtos }}" as="p" hint-placeholder-count="6">
+              <tr style="border-bottom: 1px solid rgba(255,255,255,.05);" style-hover="background: rgba(255,255,255,.022)">
+                <td style="padding: 15px 20px;">
+                  <div style="font-size: 14.5px; font-weight: 500;">{{ p.nome }}</div>
+                  <div style="font-size: 12px; color: #6C6873; margin-top: 3px;">SKU {{ p.sku }} · {{ p.unidade }}</div>
+                </td>
+                <td style="padding: 15px 14px;">
+                  <span style="padding: 5px 11px; border-radius: 999px; font-size: 12px; background: rgba(255,255,255,.06); color: #C9C4BC;">{{ p.categoria }}</span>
+                </td>
+                <td style="padding: 15px 14px; text-align: right; font-variant-numeric: tabular-nums; color: #C9C4BC;">{{ p.preco }}</td>
+                <td style="padding: 15px 14px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; color: {{ p.estoqueCor }};">{{ p.estoque }}</td>
+                <td style="padding: 15px 14px; text-align: right; font-variant-numeric: tabular-nums; color: #6C6873;">{{ p.minimo }}</td>
+                <td style="padding: 15px 14px;">
+                  <span style="display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{ p.statusBg }}; color: {{ p.statusFg }};">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: {{ p.statusFg }};"></span>{{ p.status }}
+                  </span>
+                </td>
+                <td style="padding: 15px 20px; text-align: right; white-space: nowrap;">
+                  <button onClick="{{ p.edit }}" style="border: 1px solid rgba(255,255,255,.12); background: transparent; color: #C9C4BC; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px; margin-right: 7px;" style-hover="border-color: rgba(255,255,255,.3); color: #F2EFE9">Editar</button>
+                  <button onClick="{{ p.del }}" style="border: 1px solid rgba(224,91,74,.28); background: transparent; color: #E07A6B; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px;" style-hover="background: rgba(224,91,74,.12)">Excluir</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </sc-if>
+
+      <sc-if value="{{ isUsuarios }}" hint-placeholder-val="{{ false }}">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="text-align: left;">
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Usuário</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Perfil de acesso</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Matrícula</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Último acesso</th>
+              <th style="padding: 12px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07);">Situação</th>
+              <th style="padding: 12px 20px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.07); text-align: right;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ usuarios }}" as="u" hint-placeholder-count="5">
+              <tr style="border-bottom: 1px solid rgba(255,255,255,.05);" style-hover="background: rgba(255,255,255,.022)">
+                <td style="padding: 15px 20px;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #22222A; display: grid; place-items: center; font-size: 12px; font-weight: 500; color: #C9C4BC;">{{ u.iniciais }}</div>
+                    <div>
+                      <div style="font-size: 14.5px; font-weight: 500;">{{ u.nome }}</div>
+                      <div style="font-size: 12px; color: #6C6873; margin-top: 2px;">{{ u.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 15px 14px;">
+                  <span style="padding: 5px 11px; border-radius: 999px; font-size: 12px; background: {{ u.perfilBg }}; color: {{ u.perfilFg }};">{{ u.perfil }}</span>
+                </td>
+                <td style="padding: 15px 14px; font-variant-numeric: tabular-nums; color: #C9C4BC;">{{ u.matricula }}</td>
+                <td style="padding: 15px 14px; color: #8B8790; font-variant-numeric: tabular-nums;">{{ u.ultimoAcesso }}</td>
+                <td style="padding: 15px 14px;">
+                  <span style="display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{ u.statusBg }}; color: {{ u.statusFg }};">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: {{ u.statusFg }};"></span>{{ u.status }}
+                  </span>
+                </td>
+                <td style="padding: 15px 20px; text-align: right; white-space: nowrap;">
+                  <button onClick="{{ u.edit }}" style="border: 1px solid rgba(255,255,255,.12); background: transparent; color: #C9C4BC; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px; margin-right: 7px;" style-hover="border-color: rgba(255,255,255,.3); color: #F2EFE9">Editar</button>
+                  <button onClick="{{ u.del }}" style="border: 1px solid rgba(224,91,74,.28); background: transparent; color: #E07A6B; cursor: pointer; padding: 7px 13px; border-radius: 7px; font-size: 12.5px;" style-hover="background: rgba(224,91,74,.12)">Excluir</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </sc-if>
+
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 58px 20px; text-align: center;">
+          <div style="font-family: 'Instrument Serif', serif; font-size: 22px; color: #C9C4BC;">Nenhum registro encontrado</div>
+          <div style="font-size: 13.5px; color: #6C6873; margin-top: 7px;">Ajuste a busca ou os filtros aplicados.</div>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid rgba(255,255,255,.07);">
+        <div style="font-size: 12.5px; color: #6C6873;">{{ paginationLabel }}</div>
+        <div style="display: flex; gap: 7px;">
+          <button style="border: 1px solid rgba(255,255,255,.1); background: transparent; color: #6C6873; padding: 7px 12px; border-radius: 7px; font-size: 12.5px; cursor: default;">Anterior</button>
+          <button style="border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #F2EFE9; padding: 7px 13px; border-radius: 7px; font-size: 12.5px; cursor: pointer;">1</button>
+          <button style="border: 1px solid rgba(255,255,255,.1); background: transparent; color: #C9C4BC; padding: 7px 12px; border-radius: 7px; font-size: 12.5px; cursor: pointer;" style-hover="border-color: rgba(255,255,255,.28)">Próxima</button>
+        </div>
+      </div>
+    </section>
+
+    <sc-if value="{{ showRules }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top: 22px; border: 1px solid rgba(255,255,255,.07); border-left: 0; background: #111115; border-radius: 12px; padding: 18px 22px; display: flex; gap: 26px; align-items: flex-start;">
+        <div style="font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: #6C6873; padding-top: 3px; white-space: nowrap;">Regras aplicadas</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px 26px; color: #8B8790; font-size: 13px;">
+          <sc-for list="{{ rules }}" as="r" hint-placeholder-count="2">
+            <div style="display: flex; gap: 9px; align-items: baseline;">
+              <span style="color: {{ accent }}; font-weight: 500; font-size: 12px;">{{ r.id }}</span>
+              <span>{{ r.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(6,6,8,.72); backdrop-filter: blur(3px); display: grid; place-items: center; z-index: 40; animation: fadeIn .16s ease;">
+      <div style="width: 620px; max-height: 88vh; overflow: auto; background: #15151A; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: popIn .2s cubic-bezier(.2,.8,.3,1);">
+        <div style="padding: 22px 26px 18px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+          <div>
+            <div style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6C6873; margin-bottom: 7px;">{{ modalKicker }}</div>
+            <div style="font-family: 'Instrument Serif', serif; font-size: 26px;">{{ modalTitle }}</div>
+          </div>
+          <button onClick="{{ onClose }}" style="border: 1px solid rgba(255,255,255,.12); background: transparent; color: #8B8790; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px; line-height: 1;" style-hover="color: #F2EFE9; border-color: rgba(255,255,255,.3)">×</button>
+        </div>
+
+        <div style="padding: 24px 26px;">
+          <sc-if value="{{ isSessoes }}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+              <label style="grid-column: span 2; display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Filme</span>
+                <input value="{{ form.filme }}" onChange="{{ f.filme }}" placeholder="Título do filme" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Sala</span>
+                <select value="{{ form.sala }}" onChange="{{ f.sala }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>Sala 1</option><option>Sala 2</option><option>Sala 3</option><option>Sala 4 · IMAX</option><option>Sala 5 · VIP</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Formato</span>
+                <select value="{{ form.tipo }}" onChange="{{ f.tipo }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>Dublado 2D</option><option>Legendado 2D</option><option>Dublado 3D</option><option>Legendado 3D</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Data</span>
+                <input value="{{ form.data }}" onChange="{{ f.data }}" placeholder="dd/mm/aaaa" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Horário</span>
+                <input value="{{ form.hora }}" onChange="{{ f.hora }}" placeholder="hh:mm" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Duração (min)</span>
+                <input value="{{ form.duracao }}" onChange="{{ f.duracao }}" placeholder="120" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Classificação etária</span>
+                <select value="{{ form.classificacao }}" onChange="{{ f.classificacao }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>L</option><option>10</option><option>12</option><option>14</option><option>16</option><option>18</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Valor do ingresso (R$)</span>
+                <input value="{{ form.preco }}" onChange="{{ f.preco }}" placeholder="32,00" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isProdutos }}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+              <label style="grid-column: span 2; display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Nome do produto</span>
+                <input value="{{ form.nome }}" onChange="{{ f.nome }}" placeholder="Pipoca salgada grande" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Categoria</span>
+                <select value="{{ form.categoria }}" onChange="{{ f.categoria }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>Pipoca</option><option>Bebida</option><option>Combo</option><option>Doces</option><option>Salgados</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Unidade</span>
+                <select value="{{ form.unidade }}" onChange="{{ f.unidade }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>unidade</option><option>copo 500ml</option><option>copo 700ml</option><option>balde</option><option>pacote</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Preço de venda (R$)</span>
+                <input value="{{ form.preco }}" onChange="{{ f.preco }}" placeholder="24,00" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Estoque atual</span>
+                <input value="{{ form.estoque }}" onChange="{{ f.estoque }}" placeholder="0" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Estoque mínimo</span>
+                <input value="{{ form.minimo }}" onChange="{{ f.minimo }}" placeholder="10" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Movimentação de entrada</span>
+                <input value="{{ form.entrada }}" onChange="{{ f.entrada }}" placeholder="+ 0" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isUsuarios }}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+              <label style="grid-column: span 2; display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Nome completo</span>
+                <input value="{{ form.nome }}" onChange="{{ f.nome }}" placeholder="Nome do funcionário" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">E-mail corporativo</span>
+                <input value="{{ form.email }}" onChange="{{ f.email }}" placeholder="nome@cinenovelino.com.br" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Matrícula</span>
+                <input value="{{ form.matricula }}" onChange="{{ f.matricula }}" placeholder="0000" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Perfil de acesso</span>
+                <select value="{{ form.perfil }}" onChange="{{ f.perfil }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>Administrador</option><option>Gerente</option><option>Atendente</option><option>Portaria</option><option>Bilheteria</option>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Situação</span>
+                <select value="{{ form.status }}" onChange="{{ f.status }}" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;">
+                  <option>Ativo</option><option>Inativo</option>
+                </select>
+              </label>
+              <label style="grid-column: span 2; display: flex; flex-direction: column; gap: 7px;">
+                <span style="font-size: 12.5px; color: #8B8790;">Senha provisória</span>
+                <input value="{{ form.senha }}" onChange="{{ f.senha }}" placeholder="Mínimo de 8 caracteres" style="background: #0E0E12; border: 1px solid rgba(255,255,255,.11); border-radius: 8px; padding: 11px 13px; color: #F2EFE9; font-size: 14px; outline: none;" style-focus="border-color: rgba(232,180,76,.6)" />
+              </label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showRules }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top: 20px; padding: 13px 16px; border-radius: 10px; background: rgba(232,180,76,.07); border: 1px solid rgba(232,180,76,.18); color: #D6BE8A; font-size: 12.5px; display: flex; gap: 10px;">
+              <span style="font-weight: 700;">{{ modalRuleId }}</span>
+              <span style="text-wrap: pretty;">{{ modalRule }}</span>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="padding: 18px 26px; border-top: 1px solid rgba(255,255,255,.07); display: flex; justify-content: flex-end; gap: 10px;">
+          <button onClick="{{ onClose }}" style="border: 1px solid rgba(255,255,255,.13); background: transparent; color: #C9C4BC; cursor: pointer; padding: 11px 18px; border-radius: 8px; font-size: 13.5px;" style-hover="border-color: rgba(255,255,255,.3); color: #F2EFE9">Cancelar</button>
+          <button onClick="{{ onSave }}" style="border: 0; cursor: pointer; padding: 11px 22px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #14140F; background: {{ accent }};" style-hover="filter: brightness(1.08)">{{ saveLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ deleteOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(6,6,8,.72); backdrop-filter: blur(3px); display: grid; place-items: center; z-index: 50; animation: fadeIn .16s ease;">
+      <div style="width: 430px; background: #15151A; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 26px; box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: popIn .2s cubic-bezier(.2,.8,.3,1);">
+        <div style="font-family: 'Instrument Serif', serif; font-size: 24px;">Excluir registro?</div>
+        <p style="color: #8B8790; font-size: 13.5px; line-height: 1.6; margin: 12px 0 22px; text-wrap: pretty;">{{ deleteText }}</p>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button onClick="{{ onCancelDelete }}" style="border: 1px solid rgba(255,255,255,.13); background: transparent; color: #C9C4BC; cursor: pointer; padding: 11px 18px; border-radius: 8px; font-size: 13.5px;" style-hover="border-color: rgba(255,255,255,.3); color: #F2EFE9">Manter</button>
+          <button onClick="{{ onConfirmDelete }}" style="border: 0; cursor: pointer; padding: 11px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #FFF1EE; background: #C2452F;" style-hover="filter: brightness(1.1)">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; right: 28px; bottom: 26px; z-index: 60; background: #1B1B21; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 11px; box-shadow: 0 16px 44px rgba(0,0,0,.5); animation: toastIn .22s ease;">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #5BBF8A;"></span>
+      <span style="font-size: 13.5px; color: #F2EFE9;">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#E8B44C&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#E8B44C&quot;,&quot;#63A9E8&quot;,&quot;#6FCB99&quot;,&quot;#BE93E4&quot;],&quot;section&quot;:&quot;Aparência&quot;},&quot;mostrarRegras&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Conteúdo&quot;}}">
+const BRL = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+
+const CLASS_COR = { 'L': '#5BBF8A', '10': '#63A9E8', '12': '#E8C44C', '14': '#E8A34C', '16': '#E0714C', '18': '#D2453A' };
+const PERFIL_COR = {
+  'Administrador': ['rgba(232,180,76,.14)', '#E8B44C'],
+  'Gerente': ['rgba(99,169,232,.14)', '#7FBBF0'],
+  'Atendente': ['rgba(91,191,138,.13)', '#6FCB99'],
+  'Portaria': ['rgba(255,255,255,.06)', '#C9C4BC'],
+  'Bilheteria': ['rgba(186,134,232,.14)', '#BE93E4']
+};
+
+class Component extends DCLogic {
+  state = {
+    tab: 'sessoes',
+    query: '',
+    filter: 'Todos',
+    modal: null,
+    editId: null,
+    deleteId: null,
+    toast: null,
+    form: {},
+    sessoes: [
+      { id: 1, filme: 'Duna: Parte Três', sala: 'Sala 4 · IMAX', tipo: 'Legendado 3D', data: '05/09/2026', hora: '19:40', duracao: 166, classificacao: '14', preco: 48, vendidos: 232, capacidade: 260, status: 'Confirmada' },
+      { id: 2, filme: 'O Jardim das Horas', sala: 'Sala 1', tipo: 'Dublado 2D', data: '05/09/2026', hora: '16:10', duracao: 108, classificacao: 'L', preco: 28, vendidos: 74, capacidade: 180, status: 'Confirmada' },
+      { id: 3, filme: 'Fogo Cruzado', sala: 'Sala 2', tipo: 'Legendado 2D', data: '05/09/2026', hora: '21:20', duracao: 132, classificacao: '18', preco: 32, vendidos: 158, capacidade: 164, status: 'Quase lotada' },
+      { id: 4, filme: 'Verão de 89', sala: 'Sala 5 · VIP', tipo: 'Legendado 2D', data: '06/09/2026', hora: '18:00', duracao: 121, classificacao: '12', preco: 56, vendidos: 12, capacidade: 64, status: 'Confirmada' },
+      { id: 5, filme: 'A Casa Vazia', sala: 'Sala 3', tipo: 'Dublado 2D', data: '06/09/2026', hora: '14:30', duracao: 96, classificacao: '16', preco: 26, vendidos: 0, capacidade: 150, status: 'Rascunho' },
+      { id: 6, filme: 'Pequenos Heróis 2', sala: 'Sala 1', tipo: 'Dublado 2D', data: '06/09/2026', hora: '13:00', duracao: 92, classificacao: 'L', preco: 26, vendidos: 141, capacidade: 180, status: 'Confirmada' },
+      { id: 7, filme: 'Duna: Parte Três', sala: 'Sala 4 · IMAX', tipo: 'Dublado 3D', data: '07/09/2026', hora: '22:10', duracao: 166, classificacao: '14', preco: 48, vendidos: 5, capacidade: 260, status: 'Rascunho' },
+      { id: 8, filme: 'O Último Trem', sala: 'Sala 2', tipo: 'Legendado 2D', data: '07/09/2026', hora: '20:00', duracao: 118, classificacao: '12', preco: 32, vendidos: 96, capacidade: 164, status: 'Confirmada' }
+    ],
+    produtos: [
+      { id: 1, nome: 'Pipoca salgada grande', sku: 'PIP-001', categoria: 'Pipoca', unidade: 'balde', preco: 34, estoque: 220, minimo: 60 },
+      { id: 2, nome: 'Pipoca doce média', sku: 'PIP-004', categoria: 'Pipoca', unidade: 'balde', preco: 28, estoque: 48, minimo: 50 },
+      { id: 3, nome: 'Refrigerante 700ml', sku: 'BEB-012', categoria: 'Bebida', unidade: 'copo 700ml', preco: 16, estoque: 512, minimo: 120 },
+      { id: 4, nome: 'Água mineral 500ml', sku: 'BEB-003', categoria: 'Bebida', unidade: 'unidade', preco: 7, estoque: 96, minimo: 40 },
+      { id: 5, nome: 'Combo casal · 2 pipocas + 2 refris', sku: 'CMB-002', categoria: 'Combo', unidade: 'unidade', preco: 79.9, estoque: 0, minimo: 15 },
+      { id: 6, nome: 'Combo simples · pipoca + refri', sku: 'CMB-001', categoria: 'Combo', unidade: 'unidade', preco: 46, estoque: 130, minimo: 30 },
+      { id: 7, nome: 'Chocolate ao leite 90g', sku: 'DOC-021', categoria: 'Doces', unidade: 'pacote', preco: 12, estoque: 74, minimo: 25 },
+      { id: 8, nome: 'Nachos com cheddar', sku: 'SAL-007', categoria: 'Salgados', unidade: 'unidade', preco: 27, estoque: 31, minimo: 35 }
+    ],
+    usuarios: [
+      { id: 1, nome: 'Andresa Nascimento de Paula', email: 'andresa.paula@cinenovelino.com.br', matricula: '1001', perfil: 'Gerente', status: 'Ativo', ultimoAcesso: 'Hoje, 08:42' },
+      { id: 2, nome: 'Rafael Queiroz Lima', email: 'rafael.lima@cinenovelino.com.br', matricula: '1014', perfil: 'Administrador', status: 'Ativo', ultimoAcesso: 'Hoje, 07:15' },
+      { id: 3, nome: 'Beatriz Camargo Alves', email: 'beatriz.alves@cinenovelino.com.br', matricula: '1027', perfil: 'Atendente', status: 'Ativo', ultimoAcesso: 'Ontem, 22:03' },
+      { id: 4, nome: 'Diego Ferrari Nunes', email: 'diego.nunes@cinenovelino.com.br', matricula: '1033', perfil: 'Portaria', status: 'Ativo', ultimoAcesso: 'Ontem, 23:48' },
+      { id: 5, nome: 'Marina Toledo Prado', email: 'marina.prado@cinenovelino.com.br', matricula: '1040', perfil: 'Bilheteria', status: 'Inativo', ultimoAcesso: '12/08/2026, 19:20' },
+      { id: 6, nome: 'Caio Bertolucci Reis', email: 'caio.reis@cinenovelino.com.br', matricula: '1046', perfil: 'Atendente', status: 'Ativo', ultimoAcesso: 'Hoje, 09:10' }
+    ]
+  };
+
+  go(tab) { this.setState({ tab, query: '', filter: 'Todos' }); }
+
+  blank(tab) {
+    if (tab === 'sessoes') return { filme: '', sala: 'Sala 1', tipo: 'Dublado 2D', data: '', hora: '', duracao: '', classificacao: 'L', preco: '' };
+    if (tab === 'produtos') return { nome: '', categoria: 'Pipoca', unidade: 'unidade', preco: '', estoque: '', minimo: '', entrada: '' };
+    return { nome: '', email: '', matricula: '', perfil: 'Atendente', status: 'Ativo', senha: '' };
+  }
+
+  openNew() { this.setState({ modal: 'new', editId: null, form: this.blank(this.state.tab) }); }
+
+  openEdit(row) {
+    const t = this.state.tab;
+    let form;
+    if (t === 'sessoes') form = { filme: row.filme, sala: row.sala, tipo: row.tipo, data: row.data, hora: row.hora, duracao: String(row.duracao), classificacao: row.classificacao, preco: String(row.preco).replace('.', ',') };
+    else if (t === 'produtos') form = { nome: row.nome, categoria: row.categoria, unidade: row.unidade, preco: String(row.preco).replace('.', ','), estoque: String(row.estoque), minimo: String(row.minimo), entrada: '' };
+    else form = { nome: row.nome, email: row.email, matricula: row.matricula, perfil: row.perfil, status: row.status, senha: '' };
+    this.setState({ modal: 'edit', editId: row.id, form });
+  }
+
+  close() { this.setState({ modal: null, editId: null }); }
+
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  save() {
+    const { tab, form, editId } = this.state;
+    const num = v => Number(String(v).replace(',', '.')) || 0;
+    const list = this.state[tab].slice();
+    let rec;
+    if (tab === 'sessoes') rec = { filme: form.filme || 'Nova sessão', sala: form.sala, tipo: form.tipo, data: form.data || '—', hora: form.hora || '--:--', duracao: num(form.duracao) || 100, classificacao: form.classificacao, preco: num(form.preco), vendidos: 0, capacidade: 180, status: 'Rascunho' };
+    else if (tab === 'produtos') rec = { nome: form.nome || 'Novo produto', sku: 'NEW-' + String(Math.floor(Math.random() * 900) + 100), categoria: form.categoria, unidade: form.unidade, preco: num(form.preco), estoque: num(form.estoque) + num(form.entrada), minimo: num(form.minimo) };
+    else rec = { nome: form.nome || 'Novo usuário', email: form.email || '—', matricula: form.matricula || '—', perfil: form.perfil, status: form.status, ultimoAcesso: 'Nunca acessou' };
+
+    if (editId) {
+      const i = list.findIndex(r => r.id === editId);
+      list[i] = Object.assign({}, list[i], rec);
+    } else {
+      rec.id = Math.max(0, ...list.map(r => r.id)) + 1;
+      list.unshift(rec);
+    }
+    this.setState({ [tab]: list, modal: null, editId: null });
+    this.flash(editId ? 'Registro atualizado com sucesso.' : 'Registro cadastrado com sucesso.');
+  }
+
+  confirmDelete() {
+    const { tab, deleteId } = this.state;
+    this.setState({ [tab]: this.state[tab].filter(r => r.id !== deleteId), deleteId: null });
+    this.flash('Registro excluído.');
+  }
+
+  renderVals() {
+    const accent = this.props.accentColor ?? '#E8B44C';
+    const showRules = this.props.mostrarRegras ?? true;
+    const { tab, query, filter, form } = this.state;
+    const q = query.trim().toLowerCase();
+
+    const nav = [
+      { key: 'sessoes', label: 'Sessões de filmes', count: this.state.sessoes.length },
+      { key: 'produtos', label: 'Produtos & estoque', count: this.state.produtos.length },
+      { key: 'usuarios', label: 'Usuários do sistema', count: this.state.usuarios.length }
+    ].map(n => ({
+      label: n.label, count: n.count,
+      bg: n.key === tab ? 'rgba(255,255,255,.06)' : 'transparent',
+      fg: n.key === tab ? '#F2EFE9' : '#8B8790',
+      mark: n.key === tab ? accent : 'transparent',
+      go: () => this.go(n.key)
+    }));
+
+    const filterOpts = {
+      sessoes: ['Todos', 'Confirmada', 'Rascunho'],
+      produtos: ['Todos', 'Disponível', 'Estoque baixo', 'Esgotado'],
+      usuarios: ['Todos', 'Ativo', 'Inativo']
+    }[tab];
+
+    const filters = filterOpts.map(o => ({
+      label: o,
+      bg: o === filter ? 'rgba(255,255,255,.07)' : 'transparent',
+      border: o === filter ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.1)',
+      fg: o === filter ? '#F2EFE9' : '#8B8790',
+      go: () => this.setState({ filter: o })
+    }));
+
+    // Sessões
+    const sessoes = this.state.sessoes
+      .filter(s => !q || (s.filme + s.sala + s.data).toLowerCase().includes(q))
+      .filter(s => filter === 'Todos' || s.status === filter || (filter === 'Confirmada' && s.status === 'Quase lotada'))
+      .map(s => {
+        const pct = Math.round((s.vendidos / s.capacidade) * 100);
+        const st = s.status === 'Rascunho' ? ['rgba(255,255,255,.06)', '#A9A4AC']
+          : s.status === 'Quase lotada' ? ['rgba(232,163,76,.13)', '#E8A34C']
+          : ['rgba(91,191,138,.13)', '#6FCB99'];
+        return Object.assign({}, s, {
+          classCor: CLASS_COR[s.classificacao] || '#C9C4BC',
+          ocupacao: s.vendidos + '/' + s.capacidade,
+          ocupPct: pct + '%',
+          ocupCor: pct > 92 ? '#E8A34C' : accent,
+          statusBg: st[0], statusFg: st[1],
+          edit: () => this.openEdit(s),
+          del: () => this.setState({ deleteId: s.id })
+        });
+      });
+
+    // Produtos
+    const prodStatus = p => p.estoque === 0 ? 'Esgotado' : p.estoque < p.minimo ? 'Estoque baixo' : 'Disponível';
+    const produtos = this.state.produtos
+      .filter(p => !q || (p.nome + p.categoria + p.sku).toLowerCase().includes(q))
+      .filter(p => filter === 'Todos' || prodStatus(p) === filter)
+      .map(p => {
+        const status = prodStatus(p);
+        const st = status === 'Esgotado' ? ['rgba(210,69,58,.14)', '#E07A6B']
+          : status === 'Estoque baixo' ? ['rgba(232,163,76,.13)', '#E8A34C']
+          : ['rgba(91,191,138,.13)', '#6FCB99'];
+        return Object.assign({}, p, {
+          preco: BRL(p.preco), estoqueCor: st[1], status, statusBg: st[0], statusFg: st[1],
+          edit: () => this.openEdit(p),
+          del: () => this.setState({ deleteId: p.id })
+        });
+      });
+
+    // Usuários
+    const usuarios = this.state.usuarios
+      .filter(u => !q || (u.nome + u.email + u.perfil + u.matricula).toLowerCase().includes(q))
+      .filter(u => filter === 'Todos' || u.status === filter)
+      .map(u => {
+        const pc = PERFIL_COR[u.perfil] || ['rgba(255,255,255,.06)', '#C9C4BC'];
+        const st = u.status === 'Ativo' ? ['rgba(91,191,138,.13)', '#6FCB99'] : ['rgba(255,255,255,.06)', '#A9A4AC'];
+        return Object.assign({}, u, {
+          iniciais: u.nome.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join(''),
+          perfilBg: pc[0], perfilFg: pc[1], statusBg: st[0], statusFg: st[1],
+          edit: () => this.openEdit(u),
+          del: () => this.setState({ deleteId: u.id })
+        });
+      });
+
+    const rowsLen = { sessoes: sessoes.length, produtos: produtos.length, usuarios: usuarios.length }[tab];
+
+    const page = {
+      sessoes: {
+        kicker: 'CRUD 01 · RF002 / UC003',
+        title: 'Sessões de filmes',
+        desc: 'Cadastre, altere e consulte as sessões em cartaz — filme, sala, data, horário e classificação etária.',
+        newLabel: 'Nova sessão',
+        search: 'Buscar por filme, sala ou data',
+        rules: [
+          { id: 'RN002', text: 'Uma sala não pode ter duas sessões com horários conflitantes.' },
+          { id: 'RN004', text: 'A venda respeita a classificação etária do filme.' }
+        ],
+        ruleId: 'RN002',
+        rule: 'O sistema verifica os horários já cadastrados na sala antes de gravar a sessão. Em caso de conflito, o cadastro não é concluído.',
+        metrics: [
+          { label: 'Sessões na semana', value: String(this.state.sessoes.length), hint: '3 salas ativas', hintColor: '#6C6873' },
+          { label: 'Ocupação média', value: '58%', hint: '+6% vs. semana anterior', hintColor: '#6FCB99' },
+          { label: 'Conflitos de horário', value: '0', hint: 'validado por RN002', hintColor: '#6C6873' }
+        ]
+      },
+      produtos: {
+        kicker: 'CRUD 02 · RF003 / RF004 · UC008',
+        title: 'Produtos & estoque',
+        desc: 'Cadastro dos itens do balcão de snacks com controle de entradas, saídas e quantidade disponível.',
+        newLabel: 'Novo produto',
+        search: 'Buscar por produto, SKU ou categoria',
+        rules: [
+          { id: 'RN003', text: 'A quantidade vendida não pode exceder o estoque disponível.' },
+          { id: 'RF004', text: 'O estoque nunca pode ficar negativo.' }
+        ],
+        ruleId: 'RN003',
+        rule: 'Movimentações que resultem em quantidade negativa são bloqueadas; o saldo é atualizado automaticamente após cada operação.',
+        metrics: [
+          { label: 'Itens cadastrados', value: String(this.state.produtos.length), hint: '5 categorias', hintColor: '#6C6873' },
+          { label: 'Abaixo do mínimo', value: String(this.state.produtos.filter(p => p.estoque > 0 && p.estoque < p.minimo).length), hint: 'reposição sugerida', hintColor: '#E8A34C' },
+          { label: 'Esgotados', value: String(this.state.produtos.filter(p => p.estoque === 0).length), hint: 'venda bloqueada', hintColor: '#E07A6B' }
+        ]
+      },
+      usuarios: {
+        kicker: 'CRUD 03 · RF014 / UC001',
+        title: 'Usuários do sistema',
+        desc: 'Cadastro de funcionários com perfil de acesso — cada usuário acessa somente as funções permitidas ao seu perfil.',
+        newLabel: 'Novo usuário',
+        search: 'Buscar por nome, e-mail ou matrícula',
+        rules: [
+          { id: 'RNF002', text: 'Cada usuário acessa somente as funcionalidades do seu perfil.' },
+          { id: 'UC001', text: 'E-mail e matrícula não podem estar duplicados.' }
+        ],
+        ruleId: 'RNF002',
+        rule: 'O perfil selecionado define as permissões do usuário. E-mails duplicados são rejeitados no momento do cadastro.',
+        metrics: [
+          { label: 'Usuários cadastrados', value: String(this.state.usuarios.length), hint: '5 perfis de acesso', hintColor: '#6C6873' },
+          { label: 'Ativos agora', value: String(this.state.usuarios.filter(u => u.status === 'Ativo').length), hint: 'com credencial válida', hintColor: '#6FCB99' },
+          { label: 'Inativos', value: String(this.state.usuarios.filter(u => u.status === 'Inativo').length), hint: 'acesso suspenso', hintColor: '#6C6873' }
+        ]
+      }
+    }[tab];
+
+    const setF = k => e => this.setState({ form: Object.assign({}, this.state.form, { [k]: e.target.value }) });
+    const f = {};
+    ['filme','sala','tipo','data','hora','duracao','classificacao','preco','nome','categoria','unidade','estoque','minimo','entrada','email','matricula','perfil','status','senha'].forEach(k => { f[k] = setF(k); });
+
+    const delRow = this.state.deleteId && this.state[tab].find(r => r.id === this.state.deleteId);
+
+    return {
+      accent, showRules, nav, filters,
+      isSessoes: tab === 'sessoes', isProdutos: tab === 'produtos', isUsuarios: tab === 'usuarios',
+      sessoes, produtos, usuarios,
+      isEmpty: rowsLen === 0,
+      query, onQuery: e => this.setState({ query: e.target.value }),
+      pageKicker: page.kicker, pageTitle: page.title, pageDesc: page.desc,
+      newLabel: page.newLabel, searchPlaceholder: page.search,
+      metrics: page.metrics, rules: page.rules,
+      resultCount: rowsLen + (rowsLen === 1 ? ' registro' : ' registros'),
+      paginationLabel: 'Exibindo ' + rowsLen + ' de ' + this.state[tab].length + ' registros',
+      onNew: () => this.openNew(),
+      modalOpen: !!this.state.modal,
+      modalKicker: this.state.modal === 'edit' ? 'Editar registro' : 'Novo registro',
+      modalTitle: (this.state.modal === 'edit' ? 'Editar ' : 'Cadastrar ') + { sessoes: 'sessão', produtos: 'produto', usuarios: 'usuário' }[tab],
+      modalRuleId: page.ruleId, modalRule: page.rule,
+      saveLabel: this.state.modal === 'edit' ? 'Salvar alterações' : 'Cadastrar',
+      onClose: () => this.close(), onSave: () => this.save(),
+      form: Object.assign({ filme: '', sala: '', tipo: '', data: '', hora: '', duracao: '', classificacao: '', preco: '', nome: '', categoria: '', unidade: '', estoque: '', minimo: '', entrada: '', email: '', matricula: '', perfil: '', status: '', senha: '' }, form),
+      f,
+      deleteOpen: !!this.state.deleteId,
+      deleteText: delRow ? 'O registro “' + (delRow.filme || delRow.nome) + '” será removido do sistema. Registros já vinculados a vendas confirmadas permanecem no histórico.' : '',
+      onCancelDelete: () => this.setState({ deleteId: null }),
+      onConfirmDelete: () => this.confirmDelete(),
+      toast: this.state.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

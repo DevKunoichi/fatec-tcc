@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagramas de Engenharia de Software — Sistema de Cinema (FATEC TCC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --primary: #3B82F6;
+      --border: #334155;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-text p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 0.35rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.6rem 1.2rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tab-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .btn-action {
+      background: #334155;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-action:hover {
+      background: #475569;
+    }
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .diagram-panel {
+      width: 100%;
+      max-width: 1540px;
+      background: #1E293B;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+    .diagram-panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel-header {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+    .panel-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .panel-header p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .svg-wrapper {
+      width: 100%;
+      overflow: auto;
+      background: #F8FAFC;
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid #CBD5E1;
+      display: flex;
+      justify-content: center;
+    }
+    .svg-wrapper img {
+      width: 100%;
+      height: auto;
+      min-width: 900px;
+      display: block;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo-badge">🎬</div>
+      <div class="brand-text">
+        <h1>Sistema de Gerenciamento para Cinemas</h1>
+        <p>Documentação de Engenharia de Software • FATEC TCC</p>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('conceitual')">
+        <span>🌐</span> MER Conceitual
+      </button>
+      <button class="tab-btn" onclick="switchTab('der')">
+        <span>🗄️</span> DER Lógico / Físico
+      </button>
+      <button class="tab-btn" onclick="switchTab('classes')">
+        <span>📐</span> Diagrama de Classes
+      </button>
+    </nav>
+
+    <div class="actions">
+      <a href="diagrama_classes.svg" download class="btn-action" id="downloadCurrent">
+        <span>⬇️</span> Baixar SVG Atual
+      </a>
+      <button onclick="window.print()" class="btn-action">
+        <span>🖨️</span> Imprimir / PDF
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- MER Conceitual -->
+    <div id="panel-conceitual" class="diagram-panel active">
+      <div class="panel-header">
+        <div>
+          <h2>Modelo Entidade-Relacionamento (MER) — Nível Conceitual</h2>
+          <p>Visão de negócio de alto nível demonstrando as 9 entidades nucleares, seus losangos relacionais e cardinalidades (Peter Chen).</p>
+        </div>
+      </div>
+      <div class="svg-wrapper">
+        <img src="diagrama_conceitual.svg" alt="Diagrama Conceitual MER">
+      </div>
+    </div>
+
+    <!-- DER Lógico -->
+    <div id="panel-der" class="diagram-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Diagrama de Entidade-Relacionamento (DER) — Modelo Relacional</h2>
+          <p>Esquema físico/lógico do PostgreSQL com Chaves Primárias (PK), Chaves Estrangeiras (FK), tipos de dados e conexões Pé de Galinha (1:N).</p>
+        </div>
+      </div>
+      <div class="svg-wrapper">
+        <img src="diagrama_der.svg" alt="Diagrama DER Relacional">
+      </div>
+    </div>
+
+    <!-- Classes UML -->
+    <div id="panel-classes" class="diagram-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Diagrama de Classes UML — Arquitetura de Domínio</h2>
+          <p>Estrutura orientada a objetos das entidades JPA do Spring Boot, incluindo tipagem forte, métodos de negócio e multiplicidades.</p>
+        </div>
+      </div>
+      <div class="svg-wrapper">
+        <img src="diagrama_classes.svg" alt="Diagrama de Classes UML">
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Sistema de Cinema Integrado • FATEC Trabalho de Conclusão de Curso (TCC). Todos os diagramas vetorizados em formato SVG de alta resolução.</p>
+  </footer>
+
+  <script>
+    const svgFiles = {
+      'conceitual': 'diagrama_conceitual.svg',
+      'der': 'diagrama_der.svg',
+      'classes': 'diagrama_classes.svg'
+    };
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.diagram-panel').forEach(p => p.classList.remove('active'));
+      
+      event.currentTarget.classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+      document.getElementById('downloadCurrent').setAttribute('href', svgFiles[name]);
+      document.getElementById('downloadCurrent').setAttribute('download', svgFiles[name]);
+    }
+  </script>
+</body>
+</html>
