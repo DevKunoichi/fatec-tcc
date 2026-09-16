@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 1040" width="1460" height="1040">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap');
+      * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
+      .mono { font-family: 'JetBrains Mono', monospace; }
+      .card-transition { transition: transform 0.2s ease, filter 0.2s ease; }
+      .card-transition:hover { filter: url(#card-hover-shadow); }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="115%" height="120%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.07" />
+    </filter>
+    <filter id="pill-shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.1" />
+    </filter>
+    <linearGradient id="bg-canvas" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F8FAFC" /><stop offset="100%" stop-color="#F1F5F9" /></linearGradient>
+    <linearGradient id="header-slate" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0F172A" /><stop offset="100%" stop-color="#334155" /></linearGradient>
+    <linearGradient id="grad-rel-mer" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFFBEB" /><stop offset="100%" stop-color="#FEF3C7" /></linearGradient>
+    <pattern id="dot-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#CBD5E1" opacity="0.6" /></pattern>
+  </defs>
+  <rect width="1460" height="1040" fill="url(#bg-canvas)" rx="16" />
+  <rect width="1460" height="1040" fill="url(#dot-grid)" rx="16" />
+  
+  <g id="header" transform="translate(40, 30)">
+    <rect width="1380" height="74" rx="12" fill="url(#header-slate)" filter="url(#card-shadow)" />
+    <text x="70" y="32" fill="#FFFFFF" font-size="20" font-weight="800" letter-spacing="0.5">MODELO ENTIDADE-RELACIONAMENTO (MER) — CONCEITUAL</text>
+    <text x="70" y="54" fill="#94A3B8" font-size="13" font-weight="500">Notação de Peter Chen: Entidades, Losangos e Cardinalidades (Min, Max) - Layout 100% Otimizado</text>
+  </g>
+
+  <!-- ==================== LINHAS DE RELACIONAMENTO ==================== -->
+  
+  <!-- Sala to Assento (Vertical Col 1) -->
+  <line x1="220" y1="300" x2="220" y2="460" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(160, 350)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">CONTEM</text>
+  </g>
+  <text x="230" y="320" fill="#475569" font-size="13" font-weight="700">(1,n)</text>
+  <text x="230" y="445" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+
+  <!-- Sala to Sessao (Horizontal Row 1) -->
+  <line x1="340" y1="220" x2="550" y2="220" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(385, 190)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">ALOCA</text>
+  </g>
+  <text x="350" y="210" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+  <text x="510" y="210" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+
+  <!-- Sessao to Filme (Horizontal Row 1) -->
+  <line x1="790" y1="220" x2="1000" y2="220" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(835, 190)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">EXIBE</text>
+  </g>
+  <text x="800" y="210" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+  <text x="960" y="210" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+
+  <!-- Sessao to Ingresso (Vertical Col 2) -->
+  <line x1="670" y1="300" x2="670" y2="460" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(610, 350)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">GERA</text>
+  </g>
+  <text x="680" y="320" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+  <text x="680" y="445" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+
+  <!-- Assento to Ingresso (Horizontal Row 2) -->
+  <line x1="340" y1="540" x2="550" y2="540" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(385, 510)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">REFERE-SE</text>
+  </g>
+  <text x="350" y="530" fill="#475569" font-size="13" font-weight="700">(0,1)</text>
+  <text x="510" y="530" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+
+  <!-- Ingresso to Usuario (Horizontal Row 2) -->
+  <line x1="790" y1="540" x2="1000" y2="540" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(835, 510)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">COMPRA</text>
+  </g>
+  <text x="800" y="530" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+  <text x="960" y="530" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+
+  <!-- Usuario to PedidoVenda (Vertical Col 3) -->
+  <line x1="1120" y1="620" x2="1120" y2="780" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(1060, 670)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">REALIZA</text>
+  </g>
+  <text x="1130" y="640" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+  <text x="1130" y="765" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+
+  <!-- Produto to Movimentacao (Horizontal Row 3) -->
+  <line x1="340" y1="860" x2="550" y2="860" stroke="#64748B" stroke-width="2" />
+  <g transform="translate(385, 830)">
+    <polygon points="60,0 120,30 60,60 0,30" fill="url(#grad-rel-mer)" stroke="#F59E0B" stroke-width="2" filter="url(#pill-shadow)" />
+    <text x="60" y="34" fill="#B45309" font-size="12" font-weight="800" text-anchor="middle">SOFRE</text>
+  </g>
+  <text x="350" y="850" fill="#475569" font-size="13" font-weight="700">(0,n)</text>
+  <text x="510" y="850" fill="#475569" font-size="13" font-weight="700">(1,1)</text>
+
+
+  <!-- ==================== ENTIDADES ==================== -->
+  
+  <!-- SALA (100, 140) -->
+  <g class="card-transition" transform="translate(100, 140)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">SALA</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">nome_numero</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">capacidade_total</text>
+  </g>
+
+  <!-- SESSAO (550, 140) -->
+  <g class="card-transition" transform="translate(550, 140)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">SESSAO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">data_hora_inicio</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">data_hora_fim</text>
+  </g>
+
+  <!-- FILME (1000, 140) -->
+  <g class="card-transition" transform="translate(1000, 140)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">FILME</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="95" fill="#334155" font-size="12" font-weight="600" class="mono">titulo</text>
+    <text x="16" y="115" fill="#334155" font-size="12" font-weight="600" class="mono">classificacao_etaria</text>
+    <text x="16" y="135" fill="#334155" font-size="12" font-weight="600" class="mono">duracao</text>
+  </g>
+
+  <!-- ASSENTO (100, 460) -->
+  <g class="card-transition" transform="translate(100, 460)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">ASSENTO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">fileira</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">numero</text>
+  </g>
+
+  <!-- INGRESSO (550, 460) -->
+  <g class="card-transition" transform="translate(550, 460)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">INGRESSO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">valor</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">status</text>
+  </g>
+
+  <!-- USUARIO (1000, 460) -->
+  <g class="card-transition" transform="translate(1000, 460)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">USUARIO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="95" fill="#334155" font-size="12" font-weight="600" class="mono">nome</text>
+    <text x="16" y="115" fill="#334155" font-size="12" font-weight="600" class="mono">email</text>
+    <text x="16" y="135" fill="#334155" font-size="12" font-weight="600" class="mono">perfil</text>
+  </g>
+
+  <!-- PRODUTO (100, 780) -->
+  <g class="card-transition" transform="translate(100, 780)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">PRODUTO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">nome</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">preco</text>
+    <text x="16" y="150" fill="#334155" font-size="12" font-weight="600" class="mono">estoque</text>
+  </g>
+
+  <!-- MOVIMENTACAO (550, 780) -->
+  <g class="card-transition" transform="translate(550, 780)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">MOVIMENTACAO</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">tipo</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">quantidade</text>
+    <text x="16" y="150" fill="#334155" font-size="12" font-weight="600" class="mono">data</text>
+  </g>
+
+  <!-- PEDIDO_VENDA (1000, 780) -->
+  <g class="card-transition" transform="translate(1000, 780)">
+    <rect width="240" height="160" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#card-shadow)" />
+    <path d="M 0 12 Q 0 0 12 0 L 228 0 Q 240 0 240 12 L 240 48 L 0 48 Z" fill="url(#header-slate)" />
+    <text x="16" y="25" fill="#FFFFFF" font-size="14" font-weight="800">PEDIDO_VENDA</text>
+    <text x="16" y="75" fill="#334155" font-size="12" font-weight="600" class="mono">(PK) id</text>
+    <text x="16" y="100" fill="#334155" font-size="12" font-weight="600" class="mono">valor_total</text>
+    <text x="16" y="125" fill="#334155" font-size="12" font-weight="600" class="mono">forma_pgto</text>
+    <text x="16" y="150" fill="#334155" font-size="12" font-weight="600" class="mono">data_venda</text>
+  </g>
+
+</svg>
