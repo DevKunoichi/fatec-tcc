@@ -17,6 +17,13 @@ let produtos = [
 
 let nextId = 8;
 
+let sessoes = [
+  { id: 1, filme: "O Auto da Compadecida 2", sala: "Sala 1 - VIP", horario: "19:00", capacidade: 100, ingressosVendidos: 45, status: "DISPONÍVEL" },
+  { id: 2, filme: "Duna: Parte 2", sala: "Sala 2 - IMAX", horario: "21:30", capacidade: 250, ingressosVendidos: 250, status: "ESGOTADO" },
+  { id: 3, filme: "Deadpool & Wolverine", sala: "Sala 3", horario: "16:00", capacidade: 150, ingressosVendidos: 10, status: "DISPONÍVEL" }
+];
+let nextSessaoId = 4;
+
 function updateStatus(p) {
   if (p.quantidadeEstoque <= 0) p.statusEstoque = "ESGOTADO";
   else if (p.quantidadeEstoque <= p.estoqueMinimo) p.statusEstoque = "BAIXO";
@@ -63,6 +70,20 @@ const server = http.createServer((req, res) => {
     const id = parseInt(matchId[1], 10);
     const item = produtos.find(p => p.id === id);
     if (!item) return sendJson(404, { error: "Produto não encontrado", id });
+    return sendJson(200, item);
+  }
+
+  // Sessoes: GET /api/sessoes
+  if (pathname === '/api/sessoes' && req.method === 'GET') {
+    return sendJson(200, sessoes);
+  }
+
+  // Sessoes: GET /api/sessoes/:id
+  const matchSessaoId = pathname.match(/^\/api\/sessoes\/(\d+)$/);
+  if (matchSessaoId && req.method === 'GET') {
+    const id = parseInt(matchSessaoId[1], 10);
+    const item = sessoes.find(s => s.id === id);
+    if (!item) return sendJson(404, { error: "Sessão não encontrada", id });
     return sendJson(200, item);
   }
 
@@ -148,6 +169,41 @@ const server = http.createServer((req, res) => {
       item.dataAtualizacao = new Date().toISOString();
       updateStatus(item);
       return sendJson(200, item);
+    }
+
+    // Sessoes: POST /api/sessoes
+    if (pathname === '/api/sessoes' && req.method === 'POST') {
+      const nova = {
+        id: nextSessaoId++,
+        filme: json.filme,
+        sala: json.sala,
+        horario: json.horario,
+        capacidade: Number(json.capacidade),
+        ingressosVendidos: Number(json.ingressosVendidos || 0),
+        status: json.status || "DISPONÍVEL"
+      };
+      sessoes.push(nova);
+      return sendJson(201, nova);
+    }
+
+    // Sessoes: PUT /api/sessoes/:id
+    if (matchSessaoId && req.method === 'PUT') {
+      const id = parseInt(matchSessaoId[1], 10);
+      const idx = sessoes.findIndex(s => s.id === id);
+      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
+      
+      sessoes[idx] = { ...sessoes[idx], ...json, id };
+      return sendJson(200, sessoes[idx]);
+    }
+
+    // Sessoes: DELETE /api/sessoes/:id
+    if (matchSessaoId && req.method === 'DELETE') {
+      const id = parseInt(matchSessaoId[1], 10);
+      const idx = sessoes.findIndex(s => s.id === id);
+      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
+      sessoes.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
     }
 
     // 404 fallback

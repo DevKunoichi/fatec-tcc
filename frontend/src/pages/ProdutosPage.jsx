@@ -18,11 +18,14 @@ const ProdutosPage = () => {
     estoqueMinimo: 5
   });
 
+  const [isEstoqueModalOpen, setIsEstoqueModalOpen] = useState(false);
+  const [estoqueData, setEstoqueData] = useState({ id: null, tipo: 'ENTRADA', quantidade: 1, motivo: '' });
+
   useEffect(() => {
     fetchProdutos();
-  }, []);
+  }, [fetchProdutos]);
 
-  const fetchProdutos = async () => {
+  const fetchProdutos = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/produtos');
@@ -32,7 +35,7 @@ const ProdutosPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const openModal = (mode, produto = null) => {
     setModalMode(mode);
@@ -64,9 +67,23 @@ const ProdutosPage = () => {
     setIsModalOpen(false);
   };
 
+  const openEstoqueModal = (produto) => {
+    setEstoqueData({ id: produto.id, tipo: 'ENTRADA', quantidade: 1, motivo: '' });
+    setIsEstoqueModalOpen(true);
+  };
+
+  const closeEstoqueModal = () => {
+    setIsEstoqueModalOpen(false);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEstoqueChange = (e) => {
+    const { name, value } = e.target;
+    setEstoqueData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async (e) => {
@@ -88,7 +105,27 @@ const ProdutosPage = () => {
       fetchProdutos();
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
-      alert('Erro ao salvar produto. Verifique os dados e tente novamente.');
+      const msg = error.response?.data?.message || error.response?.data?.error || 'Erro ao salvar produto. Verifique os dados e tente novamente.';
+      alert(msg);
+    }
+  };
+
+  const handleEstoqueSave = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        tipo: estoqueData.tipo,
+        quantidade: parseInt(estoqueData.quantidade, 10),
+        motivo: estoqueData.motivo
+      };
+      await api.patch(`/produtos/${estoqueData.id}/estoque`, payload);
+      closeEstoqueModal();
+      fetchProdutos();
+    } catch (error) {
+      console.error('Erro ao movimentar estoque:', error);
+      // Extrair mensagem de erro amigável do backend se houver
+      const msg = error.response?.data?.message || error.response?.data?.error || 'Erro ao movimentar estoque. Verifique os dados.';
+      alert(msg);
     }
   };
 
@@ -152,6 +189,7 @@ const ProdutosPage = () => {
                   </span>
                 </td>
                 <td className="p-4 text-center space-x-3">
+                  <button onClick={() => openEstoqueModal(p)} className="text-emerald-600 hover:underline text-sm font-medium cursor-pointer">Estoque</button>
                   <button onClick={() => openModal('editar', p)} className="text-[#1B4BA0] hover:underline text-sm font-medium cursor-pointer">Editar</button>
                   <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm font-medium cursor-pointer">Excluir</button>
                 </td>
@@ -204,7 +242,7 @@ const ProdutosPage = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
-                    <input type="number" step="0.01" min="0" name="preco" value={formData.preco} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]" />
+                    <input type="number" step="0.01" min="0.01" name="preco" value={formData.preco} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Estoque</label>
@@ -220,6 +258,46 @@ const ProdutosPage = () => {
               <div className="mt-6 flex justify-end space-x-3">
                 <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium cursor-pointer">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-[#1B4BA0] text-white rounded font-medium hover:bg-[#16295B] cursor-pointer">Salvar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEstoqueModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+              <h3 className="text-lg font-bold text-[#16295B]">
+                Movimentar Estoque
+              </h3>
+              <button onClick={closeEstoqueModal} className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+            
+            <form onSubmit={handleEstoqueSave} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Movimento</label>
+                  <select name="tipo" value={estoqueData.tipo} onChange={handleEstoqueChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                    <option value="ENTRADA">Entrada (+)</option>
+                    <option value="SAIDA">Saída (-)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+                  <input type="number" min="1" step="1" name="quantidade" value={estoqueData.quantidade} onChange={handleEstoqueChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Motivo (Opcional)</label>
+                  <input type="text" name="motivo" value={estoqueData.motivo} onChange={handleEstoqueChange} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600" placeholder="Ex: Reposição, Descarte..." />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button type="button" onClick={closeEstoqueModal} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium cursor-pointer">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-700 cursor-pointer">Confirmar</button>
               </div>
             </form>
           </div>
