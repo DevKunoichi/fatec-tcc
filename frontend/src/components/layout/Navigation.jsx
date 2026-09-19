@@ -1,13 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import api from '../../services/api';
 
 const navItems = [
-  { key: 'sessoes', path: '/', num: '01', label: 'Sessões', count: 8 },
-  { key: 'produtos', path: '/produtos', num: '02', label: 'Produtos & estoque', count: 8 },
-  { key: 'usuarios', path: '/usuarios', num: '03', label: 'Usuários', count: 6 }
+  { key: 'sessoes', path: '/', num: '01', label: 'Sessões', endpoint: '/sessoes' },
+  { key: 'produtos', path: '/produtos', num: '02', label: 'Produtos & estoque', endpoint: '/produtos' },
+  { key: 'usuarios', path: '/usuarios', num: '03', label: 'Usuários', endpoint: '/usuarios' }
 ];
 
 const Navigation = () => {
+  const [counts, setCounts] = useState(() => ({ sessoes: null, produtos: null, usuarios: null }));
+
+  useEffect(() => {
+    let active = true;
+    const loadCounts = async () => {
+      const next = {};
+      await Promise.all(navItems.map(async (t) => {
+        try {
+          const response = await api.get(t.endpoint);
+          next[t.key] = Array.isArray(response.data) ? response.data.length : null;
+        } catch (error) {
+          next[t.key] = null;
+        }
+      }));
+      if (active) setCounts(next);
+    };
+    loadCounts();
+    return () => { active = false; };
+  }, []);
+
   return (
     <nav style={{ background: '#FFFFFF', padding: '0 40px', borderBottom: '1px solid #D5DEEA' }}>
       <div style={{ maxWidth: '1520px', margin: '0 auto', display: 'flex', gap: 0 }}>
@@ -46,7 +67,7 @@ const Navigation = () => {
                   background: isActive ? '#1B4BA0' : '#E7ECF4',
                   color: isActive ? '#FFFFFF' : '#5C6779'
                 }}>
-                  {t.count}
+                  {counts[t.key] ?? ''}
                 </span>
               </>
             )}
