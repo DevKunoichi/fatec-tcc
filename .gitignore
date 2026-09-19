@@ -1,0 +1,11 @@
+# Build
+backend/target/
+
+# IDE / SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log

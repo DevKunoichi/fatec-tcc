@@ -18,11 +18,25 @@ let produtos = [
 let nextId = 8;
 
 let sessoes = [
-  { id: 1, filme: "O Auto da Compadecida 2", sala: "Sala 1 - VIP", horario: "19:00", capacidade: 100, ingressosVendidos: 45, status: "DISPONÍVEL" },
+  { id: 1, filme: "O Auto da Compadecida 2", sala: "Sala 1 - Padrao", horario: "19:00", capacidade: 100, ingressosVendidos: 45, status: "DISPONÍVEL" },
   { id: 2, filme: "Duna: Parte 2", sala: "Sala 2 - IMAX", horario: "21:30", capacidade: 250, ingressosVendidos: 250, status: "ESGOTADO" },
-  { id: 3, filme: "Deadpool & Wolverine", sala: "Sala 3", horario: "16:00", capacidade: 150, ingressosVendidos: 10, status: "DISPONÍVEL" }
+  { id: 3, filme: "Deadpool & Wolverine", sala: "Sala 3 - VIP", horario: "16:00", capacidade: 150, ingressosVendidos: 10, status: "DISPONÍVEL" }
 ];
 let nextSessaoId = 4;
+
+let filmes = [
+  { id: 1, titulo: "O Auto da Compadecida 2", classificacaoEtaria: "14", duracaoMinutos: 124, sinopse: "Joao Grilo e Chico retornam para novas aventuras no Nordeste.", genero: "Comedia, Aventura", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 2, titulo: "Duna: Parte 2", classificacaoEtaria: "12", duracaoMinutos: 166, sinopse: "Paul Atreides se une aos Fremen e busca vinganca contra os Harkonnen.", genero: "Ficcao, Aventura, Drama", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 3, titulo: "Deadpool & Wolverine", classificacaoEtaria: "18", duracaoMinutos: 128, sinopse: "Wolverine e Deadpool unem forcas em uma aventura pelo multiverso.", genero: "Acao, Comedia, Ficcao", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
+];
+let nextFilmeId = 4;
+
+let salas = [
+  { id: 1, nomeNumero: "Sala 1 - Padrao", capacidadeTotal: 100, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 2, nomeNumero: "Sala 2 - IMAX", capacidadeTotal: 250, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 3, nomeNumero: "Sala 3 - VIP", capacidadeTotal: 150, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
+];
+let nextSalaId = 4;
 
 function updateStatus(p) {
   if (p.quantidadeEstoque <= 0) p.statusEstoque = "ESGOTADO";
@@ -84,6 +98,40 @@ const server = http.createServer((req, res) => {
     const id = parseInt(matchSessaoId[1], 10);
     const item = sessoes.find(s => s.id === id);
     if (!item) return sendJson(404, { error: "Sessão não encontrada", id });
+    return sendJson(200, item);
+  }
+
+  // Filmes: GET /api/filmes (suporta ?termo=)
+  if (pathname === '/api/filmes' && req.method === 'GET') {
+    const { termo } = parsedUrl.query;
+    let list = [...filmes];
+    if (termo) {
+      const q = termo.toLowerCase();
+      list = list.filter(f => f.titulo.toLowerCase().includes(q) || (f.genero && f.genero.toLowerCase().includes(q)));
+    }
+    return sendJson(200, list);
+  }
+
+  // Filmes: GET /api/filmes/:id
+  const matchFilmeId = pathname.match(/^\/api\/filmes\/(\d+)$/);
+  if (matchFilmeId && req.method === 'GET') {
+    const id = parseInt(matchFilmeId[1], 10);
+    const item = filmes.find(f => f.id === id);
+    if (!item) return sendJson(404, { error: "Filme não encontrado", id });
+    return sendJson(200, item);
+  }
+
+  // Salas: GET /api/salas
+  if (pathname === '/api/salas' && req.method === 'GET') {
+    return sendJson(200, salas);
+  }
+
+  // Salas: GET /api/salas/:id
+  const matchSalaId = pathname.match(/^\/api\/salas\/(\d+)$/);
+  if (matchSalaId && req.method === 'GET') {
+    const id = parseInt(matchSalaId[1], 10);
+    const item = salas.find(s => s.id === id);
+    if (!item) return sendJson(404, { error: "Sala não encontrada", id });
     return sendJson(200, item);
   }
 
@@ -184,6 +232,90 @@ const server = http.createServer((req, res) => {
       };
       sessoes.push(nova);
       return sendJson(201, nova);
+    }
+
+    // Filmes: POST /api/filmes (cadastro manual)
+    if (pathname === '/api/filmes' && req.method === 'POST') {
+      if (!json.titulo) {
+        return sendJson(400, { error: "Campo obrigatorio ausente: titulo" });
+      }
+      const novo = {
+        id: nextFilmeId++,
+        titulo: json.titulo.trim(),
+        classificacaoEtaria: json.classificacaoEtaria || null,
+        duracaoMinutos: json.duracaoMinutos ? Number(json.duracaoMinutos) : null,
+        sinopse: json.sinopse || null,
+        genero: json.genero || null,
+        posterUrl: json.posterUrl || null,
+        diretor: json.diretor || null,
+        imdbId: json.imdbId || null,
+        dataCadastro: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+      };
+      filmes.push(novo);
+      return sendJson(201, novo);
+    }
+
+    // Filmes: POST /api/filmes/buscar (simulacao da integracao OMDb no mock)
+    if (pathname === '/api/filmes/buscar' && req.method === 'POST') {
+      const titulo = (parsedUrl.query.titulo || json.titulo || '').trim();
+      if (!titulo) {
+        return sendJson(400, { error: "Informe o titulo para buscar (parametro 'titulo')" });
+      }
+      const existente = filmes.find(f => f.titulo.toLowerCase() === titulo.toLowerCase());
+      if (existente) return sendJson(200, existente);
+
+      const novo = {
+        id: nextFilmeId++,
+        titulo: titulo,
+        classificacaoEtaria: json.classificacaoEtaria || "L",
+        duracaoMinutos: json.duracaoMinutos ? Number(json.duracaoMinutos) : 120,
+        sinopse: json.sinopse || "Sinopse obtida via OMDb (simulacao no mock).",
+        genero: json.genero || "Drama",
+        posterUrl: json.posterUrl || null,
+        diretor: json.diretor || null,
+        imdbId: json.imdbId || null,
+        dataCadastro: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+      };
+      filmes.push(novo);
+      return sendJson(201, novo);
+    }
+
+    // Filmes: DELETE /api/filmes/:id
+    if (matchFilmeId && req.method === 'DELETE') {
+      const id = parseInt(matchFilmeId[1], 10);
+      const idx = filmes.findIndex(f => f.id === id);
+      if (idx === -1) return sendJson(404, { error: "Filme não encontrado" });
+      filmes.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // Salas: POST /api/salas
+    if (pathname === '/api/salas' && req.method === 'POST') {
+      if (!json.nomeNumero || json.capacidadeTotal === undefined) {
+        return sendJson(400, { error: "Campos obrigatorios ausentes: nomeNumero, capacidadeTotal" });
+      }
+      const nova = {
+        id: nextSalaId++,
+        nomeNumero: json.nomeNumero.trim(),
+        capacidadeTotal: Number(json.capacidadeTotal),
+        dataCadastro: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+      };
+      salas.push(nova);
+      return sendJson(201, nova);
+    }
+
+    // Salas: DELETE /api/salas/:id
+    if (matchSalaId && req.method === 'DELETE') {
+      const id = parseInt(matchSalaId[1], 10);
+      const idx = salas.findIndex(s => s.id === id);
+      if (idx === -1) return sendJson(404, { error: "Sala não encontrada" });
+      salas.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
     }
 
     // Sessoes: PUT /api/sessoes/:id

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import BuscaFilmeModal from '../components/filmes/BuscaFilmeModal';
 
 const SessoesPage = () => {
   const [sessoes, setSessoes] = useState([]);
+  const [filmes, setFilmes] = useState([]);
+  const [salas, setSalas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Estados do Modal
@@ -11,14 +14,17 @@ const SessoesPage = () => {
   const [formData, setFormData] = useState({
     id: null,
     filme: '',
-    sala: 'Sala 1 - Padrão',
+    sala: 'Sala 1 - Padrao',
     horario: '',
     capacidade: 100,
     ingressosVendidos: 0
   });
+  const [isBuscaOpen, setIsBuscaOpen] = useState(false);
 
   useEffect(() => {
     fetchSessoes();
+    fetchFilmes();
+    fetchSalas();
   }, []);
 
   const fetchSessoes = async () => {
@@ -30,6 +36,24 @@ const SessoesPage = () => {
       console.error('Erro ao buscar sessões:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFilmes = async () => {
+    try {
+      const response = await api.get('/filmes');
+      setFilmes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar filmes:', error);
+    }
+  };
+
+  const fetchSalas = async () => {
+    try {
+      const response = await api.get('/salas');
+      setSalas(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar salas:', error);
     }
   };
 
@@ -47,14 +71,30 @@ const SessoesPage = () => {
     } else {
       setFormData({
         id: null,
-        filme: '',
-        sala: 'Sala 1 - Padrão',
+        filme: filmes.length > 0 ? filmes[0].titulo : '',
+        sala: salas.length > 0 ? salas[0].nomeNumero : 'Sala 1 - Padrao',
         horario: '',
-        capacidade: 100,
+        capacidade: salas.length > 0 ? salas[0].capacidadeTotal : 100,
         ingressosVendidos: 0
       });
     }
     setIsModalOpen(true);
+  };
+
+  const handleSelecionarFilme = (filme) => {
+    // Adiciona o filme ao catalogo local (caso ainda nao esteja) e seleciona na sessao
+    setFilmes(prev => (prev.some(f => f.id === filme.id) ? prev : [filme, ...prev]));
+    setFormData(prev => ({ ...prev, filme: filme.titulo }));
+  };
+
+  const handleSalaChange = (e) => {
+    const nomeSala = e.target.value;
+    const salaSel = salas.find(s => s.nomeNumero === nomeSala);
+    setFormData(prev => ({
+      ...prev,
+      sala: nomeSala,
+      capacidade: salaSel ? salaSel.capacidadeTotal : prev.capacidade
+    }));
   };
 
   const closeModal = () => {
@@ -188,18 +228,40 @@ const SessoesPage = () => {
             <form onSubmit={handleSave} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Filme</label>
-                  <input type="text" name="filme" value={formData.filme} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]" placeholder="Ex: O Senhor dos Anéis" />
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Filme</label>
+                      <select name="filme" value={formData.filme} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]">
+                        {filmes.length === 0 && <option value="">Nenhum filme no catalogo</option>}
+                        {filmes.map(f => (
+                          <option key={f.id} value={f.titulo}>{f.titulo}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsBuscaOpen(true)}
+                      className="px-3 py-2 bg-[#E7ECF4] text-[#1B4BA0] rounded font-semibold text-sm hover:bg-[#d5deea] cursor-pointer whitespace-nowrap"
+                    >
+                      Buscar na OMDb
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sala</label>
-                    <select name="sala" value={formData.sala} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]">
-                      <option value="Sala 1 - Padrão">Sala 1 - Padrão</option>
-                      <option value="Sala 2 - IMAX">Sala 2 - IMAX</option>
-                      <option value="Sala 3 - VIP">Sala 3 - VIP</option>
-                      <option value="Sala 4 - 3D">Sala 4 - 3D</option>
+                    <select name="sala" value={formData.sala} onChange={handleSalaChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]">
+                      {salas.length === 0 && (
+                        <>
+                          <option value="Sala 1 - Padrao">Sala 1 - Padrao</option>
+                          <option value="Sala 2 - IMAX">Sala 2 - IMAX</option>
+                          <option value="Sala 3 - VIP">Sala 3 - VIP</option>
+                        </>
+                      )}
+                      {salas.map(s => (
+                        <option key={s.id} value={s.nomeNumero}>{s.nomeNumero} ({s.capacidadeTotal} lugares)</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -228,6 +290,12 @@ const SessoesPage = () => {
           </div>
         </div>
       )}
+
+      <BuscaFilmeModal
+        open={isBuscaOpen}
+        onClose={() => setIsBuscaOpen(false)}
+        onSelecionar={handleSelecionarFilme}
+      />
     </div>
   );
 };
