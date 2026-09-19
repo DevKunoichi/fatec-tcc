@@ -2,6 +2,8 @@ package com.cinema.services;
 
 import com.cinema.dtos.OmdbMovieResponse;
 import com.cinema.exceptions.RegraNegocioException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -10,6 +12,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class OmdbService {
+
+    private static final Logger log = LoggerFactory.getLogger(OmdbService.class);
 
     private final RestTemplate restTemplate;
     private final String baseUrl;
@@ -45,7 +49,8 @@ public class OmdbService {
             }
             return resp;
         } catch (RestClientException e) {
-            throw new RegraNegocioException("Erro ao consultar a API OMDb: " + e.getMessage());
+            log.error("Falha de comunicacao com a API OMDb (tipo={}, titulo='{}'). Detalhe suprimido para nao expor a chave.", e.getClass().getSimpleName(), titulo);
+            throw new RegraNegocioException("Nao foi possivel consultar a API OMDb no momento. Tente novamente em instantes.");
         }
     }
 }

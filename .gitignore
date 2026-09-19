@@ -1,5 +1,12 @@
 # Build
 backend/target/
+frontend/dist/
+frontend/node_modules/
+
+# Segredos / Ambiente
+.env
+.env.*
+*.local
 
 # IDE / SO
 .idea/
@@ -9,3 +16,12 @@ backend/target/
 
 # Logs
 *.log
+
+# Artefatos temporarios / presentes antigos
+support.js
+*.thumbnail
+frontend/uploads/
+
+# Lockfiles de npm acidentais fora do frontend
+package-lock.json
+!frontend/package-lock.json

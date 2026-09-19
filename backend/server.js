@@ -1,5 +1,5 @@
 // Servidor API REST Standalone (Node.js) - Executa imediatamente sem dependencias externas
-// Replica fielmente os endpoints do Spring Boot (/api/produtos)
+// Replica o contrato REST do Spring Boot (produtos, sessoes, filmes, salas)
 const http = require('http');
 const url = require('url');
 
@@ -279,7 +279,7 @@ const server = http.createServer((req, res) => {
         dataAtualizacao: new Date().toISOString()
       };
       filmes.push(novo);
-      return sendJson(201, novo);
+      return sendJson(200, novo);
     }
 
     // Filmes: DELETE /api/filmes/:id
@@ -343,7 +343,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`====================================================`);
   console.log(`🎬 API REST - Sistema de Cinema (CRUD Produtos & Estoque)`);
   console.log(`📡 Endpoints disponíveis em http://localhost:${PORT}/api/produtos`);
