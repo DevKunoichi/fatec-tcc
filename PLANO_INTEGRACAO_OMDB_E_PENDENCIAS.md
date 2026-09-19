@@ -1,6 +1,6 @@
 # Plano Completo: Integração OMDb API + Pendências do Projeto Fatec-TCC
 
-**Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cine Cinemax)
+**Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cinemax)
 **Data original:** 2026-09-17
 **Última atualização:** 2026-09-19
 **Status:** Em andamento — Fase 1 ✅ e Fase 2 ✅ concluídas e commitadas; aguardando teste do usuário + chave OMDb; próximo passo: Fase 3
@@ -359,7 +359,7 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
   - `POST /api/auth/refresh` — renovar token
 - [ ] `UsuarioController.java` — CRUD (apenas ADMIN pode gerenciar)
 - [ ] Senhas com BCrypt
-- [ ] Seed: 1 usuário admin (admin@cineCinemax.com / admin123)
+- [ ] Seed: 1 usuário admin (admin@cinemax.com / admin123)
 
 **Frontend:**
 - [ ] Página `LoginPage.jsx`

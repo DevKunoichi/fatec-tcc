@@ -1,4 +1,4 @@
-# 🎬 Sistema de Gerenciamento Integrado para Cinemas — Cine Cinemax
+# 🎬 Sistema de Gerenciamento Integrado para Cinemas — Cinemax
 
 Documentação técnica e **controle de status** do projeto (TCC — FATEC).
 
