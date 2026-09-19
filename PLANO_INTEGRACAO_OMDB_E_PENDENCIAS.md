@@ -1,6 +1,6 @@
 # Plano Completo: Integração OMDb API + Pendências do Projeto Fatec-TCC
 
-**Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cine Novelino)
+**Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cine Cinemax)
 **Data original:** 2026-09-17
 **Última atualização:** 2026-09-19
 **Status:** Em andamento — Fase 1 ✅ e Fase 2 ✅ concluídas e commitadas; aguardando teste do usuário + chave OMDb; próximo passo: Fase 3
@@ -102,7 +102,7 @@ A [OMDb API](https://www.omdbapi.com/) é uma API REST gratuita que retorna dado
 
 ### 1.3 Campos da Response (detalhes por título/ID)
 
-| Campo | Tipo | Uso no Cinema Novelino |
+| Campo | Tipo | Uso no Cinema Cinemax |
 |-------|------|----------------------|
 | `Title` | String | `titulo` do Filme |
 | `Year` | String | Contexto de lançamento |
@@ -359,7 +359,7 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
   - `POST /api/auth/refresh` — renovar token
 - [ ] `UsuarioController.java` — CRUD (apenas ADMIN pode gerenciar)
 - [ ] Senhas com BCrypt
-- [ ] Seed: 1 usuário admin (admin@cineNovelino.com / admin123)
+- [ ] Seed: 1 usuário admin (admin@cineCinemax.com / admin123)
 
 **Frontend:**
 - [ ] Página `LoginPage.jsx`
@@ -402,7 +402,7 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
   - [ ] Remover `ddl-auto=update` para produção
 - [ ] **Limpeza:**
   - [ ] Deletar `frontend/src/components/layout/Layout.jsx` (corrompido)
-  - [ ] Renomear "temp-react" para "cine-novelino" em `package.json` e `index.html`
+  - [ ] Renomear "temp-react" para "cine-cinemax" em `package.json` e `index.html`
   - [ ] Atualizar `Navigation.jsx` para counts dinâmicos (via API)
   - [ ] Remover referência quebrada `frontend/crud_produtos.html` do `docs/crud.md`
   - [ ] Remover `support.js` e `.thumbnail` (artifacts de ferramenta AI)
