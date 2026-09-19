@@ -7,7 +7,7 @@ const Header = () => {
       <header style={{ background: '#1B4BA0', color: '#FFFFFF', padding: '0 40px' }}>
         <div style={{ maxWidth: '1520px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '66px', gap: '40px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-            <div style={{ fontSize: '19px', fontWeight: 800, letterSpacing: '-.02em' }}>CINE NOVELINO</div>
+            <div style={{ fontSize: '19px', fontWeight: 800, letterSpacing: '-.02em' }}>CINE CINEMAX</div>
             <div style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '10.5px', letterSpacing: '.18em', color: '#AFC2E6', textTransform: 'uppercase' }}>
               Gerenciamento integrado
             </div>

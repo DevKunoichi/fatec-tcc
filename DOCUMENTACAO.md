@@ -1,4 +1,4 @@
-# 🎬 Sistema de Gerenciamento Integrado para Cinemas — Cine Novelino
+# 🎬 Sistema de Gerenciamento Integrado para Cinemas — Cine Cinemax
 
 Documentação técnica e **controle de status** do projeto (TCC — FATEC).
 
