@@ -1,11 +1,18 @@
 // Servidor API REST Standalone (Node.js) - Executa imediatamente sem dependencias externas
-// Replica o contrato REST do Spring Boot (produtos, sessoes, filmes, salas)
+// Replica o contrato REST do Spring Boot (produtos, filmes, salas, sessoes)
 const http = require('http');
 const url = require('url');
 
 const PORT = process.env.PORT || 8080;
 
-let produtos = [
+const sessoesEstado = {
+  DISPONIVEL: 'DISPONIVEL',
+  LOTADA: 'LOTADA',
+  CANCELADA: 'CANCELADA',
+  ENCERRADA: 'ENCERRADA'
+};
+
+const produtos = [
   { id: 1, nome: "Pipoca Grande Salgada", categoria: "Pipocas", unidade: "Balde 200g", preco: 24.00, quantidadeEstoque: 45, estoqueMinimo: 10, statusEstoque: "NORMAL", dataCadastro: new Date().toISOString() },
   { id: 2, nome: "Pipoca Média Manteiga", categoria: "Pipocas", unidade: "Saco 120g", preco: 18.50, quantidadeEstoque: 8, estoqueMinimo: 10, statusEstoque: "BAIXO", dataCadastro: new Date().toISOString() },
   { id: 3, nome: "Coca-Cola Lata 350ml", categoria: "Bebidas", unidade: "Lata", preco: 9.00, quantidadeEstoque: 80, estoqueMinimo: 20, statusEstoque: "NORMAL", dataCadastro: new Date().toISOString() },
@@ -17,31 +24,71 @@ let produtos = [
 
 let nextId = 8;
 
-let sessoes = [
-  { id: 1, filme: "O Auto da Compadecida 2", sala: "Sala 1 - Padrao", horario: "19:00", capacidade: 100, ingressosVendidos: 45, status: "DISPONÍVEL" },
-  { id: 2, filme: "Duna: Parte 2", sala: "Sala 2 - IMAX", horario: "21:30", capacidade: 250, ingressosVendidos: 250, status: "ESGOTADO" },
-  { id: 3, filme: "Deadpool & Wolverine", sala: "Sala 3 - VIP", horario: "16:00", capacidade: 150, ingressosVendidos: 10, status: "DISPONÍVEL" }
-];
-let nextSessaoId = 4;
-
-let filmes = [
+const filmes = [
   { id: 1, titulo: "O Auto da Compadecida 2", classificacaoEtaria: "14", duracaoMinutos: 124, sinopse: "Joao Grilo e Chico retornam para novas aventuras no Nordeste.", genero: "Comedia, Aventura", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
   { id: 2, titulo: "Duna: Parte 2", classificacaoEtaria: "12", duracaoMinutos: 166, sinopse: "Paul Atreides se une aos Fremen e busca vinganca contra os Harkonnen.", genero: "Ficcao, Aventura, Drama", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
   { id: 3, titulo: "Deadpool & Wolverine", classificacaoEtaria: "18", duracaoMinutos: 128, sinopse: "Wolverine e Deadpool unem forcas em uma aventura pelo multiverso.", genero: "Acao, Comedia, Ficcao", posterUrl: null, diretor: null, imdbId: null, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
 ];
 let nextFilmeId = 4;
 
-let salas = [
+const salas = [
   { id: 1, nomeNumero: "Sala 1 - Padrao", capacidadeTotal: 100, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
   { id: 2, nomeNumero: "Sala 2 - IMAX", capacidadeTotal: 250, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
   { id: 3, nomeNumero: "Sala 3 - VIP", capacidadeTotal: 150, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
 ];
 let nextSalaId = 4;
 
+// Formata em horario local (wall-clock), preservando o round-trip de datas
+// "offset-naive" que o cliente envia ("YYYY-MM-DDTHH:mm"). Usar toISOString()
+// (UTC) aqui deslocaria os horarios e quebraria a deteccao de conflitos.
+const toLocal = (date) => {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}:${p(date.getSeconds())}`;
+};
+const hojemais = (hv) => { const d = new Date(); return toLocal(new Date(d.getTime() + hv)); };
+
+// Sessoes normalizadas (FK por ids), espelhando o modelo JPA do backend Java.
+const sessoes = [
+  { id: 1, filmeId: 1, salaId: 1, dataHoraInicio: hojemais(1 * 3600e3), dataHoraFim: hojemais(3 * 3600e3 + 4 * 60e3), status: sessoesEstado.DISPONIVEL, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 2, filmeId: 2, salaId: 2, dataHoraInicio: hojemais(4 * 3600e3), dataHoraFim: hojemais(6 * 3600e3 + 46 * 60e3), status: sessoesEstado.DISPONIVEL, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 3, filmeId: 3, salaId: 3, dataHoraInicio: hojemais(7 * 3600e3), dataHoraFim: hojemais(9 * 3600e3 + 8 * 60e3), status: sessoesEstado.ENCERRADA, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
+];
+let nextSessaoId = 4;
+
 function updateStatus(p) {
   if (p.quantidadeEstoque <= 0) p.statusEstoque = "ESGOTADO";
   else if (p.quantidadeEstoque <= p.estoqueMinimo) p.statusEstoque = "BAIXO";
   else p.statusEstoque = "NORMAL";
+}
+
+// Projeta a sessao no mesmo shape do SessaoResponseDTO do Java (filme/sala aninhados).
+function enriquecerSessao(s) {
+  const filme = filmes.find(f => f.id === s.filmeId);
+  const sala = salas.find(sl => sl.id === s.salaId);
+  const ingressosVendidos = 0; // Ingressos implementados em fase futura.
+  return {
+    id: s.id,
+    filme: filme || null,
+    sala: sala || null,
+    dataHoraInicio: s.dataHoraInicio,
+    dataHoraFim: s.dataHoraFim,
+    status: s.status,
+    ingressosVendidos,
+    vagasDisponiveis: sala ? sala.capacidadeTotal - ingressosVendidos : 0,
+    dataCadastro: s.dataCadastro,
+    dataAtualizacao: s.dataAtualizacao
+  };
+}
+
+// Verifica sobreposicao de horario na mesma sala, ignorando idSelf (para PUT).
+function sessaoConflitante(salaId, inicioMs, fimMs, idSelf) {
+  return sessoes.some(s =>
+    s.id !== idSelf &&
+    s.salaId === salaId &&
+    s.status !== sessoesEstado.CANCELADA &&
+    Date.parse(s.dataHoraInicio) < fimMs &&
+    Date.parse(s.dataHoraFim) > inicioMs
+  );
 }
 
 const server = http.createServer((req, res) => {
@@ -89,7 +136,7 @@ const server = http.createServer((req, res) => {
 
   // Sessoes: GET /api/sessoes
   if (pathname === '/api/sessoes' && req.method === 'GET') {
-    return sendJson(200, sessoes);
+    return sendJson(200, sessoes.map(enriquecerSessao));
   }
 
   // Sessoes: GET /api/sessoes/:id
@@ -98,7 +145,7 @@ const server = http.createServer((req, res) => {
     const id = parseInt(matchSessaoId[1], 10);
     const item = sessoes.find(s => s.id === id);
     if (!item) return sendJson(404, { error: "Sessão não encontrada", id });
-    return sendJson(200, item);
+    return sendJson(200, enriquecerSessao(item));
   }
 
   // Filmes: GET /api/filmes (suporta ?termo=)
@@ -141,7 +188,7 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     let json = {};
     if (body) {
-      try { json = JSON.parse(body); } catch(e) {}
+      try { json = JSON.parse(body); } catch (e) {}
     }
 
     // 3. POST /api/produtos
@@ -169,7 +216,7 @@ const server = http.createServer((req, res) => {
       const id = parseInt(matchId[1], 10);
       const idx = produtos.findIndex(p => p.id === id);
       if (idx === -1) return sendJson(404, { error: "Produto não encontrado para atualização" });
-      
+
       produtos[idx].nome = json.nome || produtos[idx].nome;
       produtos[idx].categoria = json.categoria || produtos[idx].categoria;
       if (json.unidade) produtos[idx].unidade = json.unidade;
@@ -221,17 +268,84 @@ const server = http.createServer((req, res) => {
 
     // Sessoes: POST /api/sessoes
     if (pathname === '/api/sessoes' && req.method === 'POST') {
+      if (json.filmeId === undefined || json.salaId === undefined || !json.dataHoraInicio || !json.dataHoraFim) {
+        return sendJson(400, { error: "Campos obrigatorios ausentes: filmeId, salaId, dataHoraInicio, dataHoraFim" });
+      }
+      const filmeId = Number(json.filmeId);
+      const salaId = Number(json.salaId);
+      const filme = filmes.find(f => f.id === filmeId);
+      const sala = salas.find(s => s.id === salaId);
+      if (!filme) return sendJson(404, { error: `Filme com ID ${filmeId} nao encontrado.` });
+      if (!sala) return sendJson(404, { error: `Sala com ID ${salaId} nao encontrada.` });
+
+      const inicioMs = Date.parse(json.dataHoraInicio);
+      const fimMs = Date.parse(json.dataHoraFim);
+      if (isNaN(inicioMs) || isNaN(fimMs) || fimMs <= inicioMs) {
+        return sendJson(422, { error: "O fim da sessao deve ser posterior ao inicio." });
+      }
+      if (sessaoConflitante(salaId, inicioMs, fimMs, -1)) {
+        return sendJson(422, { error: "Ja existe uma sessao nessa sala no periodo informado." });
+      }
+
+      const agora = new Date().toISOString();
       const nova = {
         id: nextSessaoId++,
-        filme: json.filme,
-        sala: json.sala,
-        horario: json.horario,
-        capacidade: Number(json.capacidade),
-        ingressosVendidos: Number(json.ingressosVendidos || 0),
-        status: json.status || "DISPONÍVEL"
+        filmeId,
+        salaId,
+        dataHoraInicio: toLocal(new Date(inicioMs)),
+        dataHoraFim: toLocal(new Date(fimMs)),
+        status: json.status || sessoesEstado.DISPONIVEL,
+        dataCadastro: agora,
+        dataAtualizacao: agora
       };
       sessoes.push(nova);
-      return sendJson(201, nova);
+      return sendJson(201, enriquecerSessao(nova));
+    }
+
+    // Sessoes: PUT /api/sessoes/:id
+    if (matchSessaoId && req.method === 'PUT') {
+      const id = parseInt(matchSessaoId[1], 10);
+      const idx = sessoes.findIndex(s => s.id === id);
+      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
+
+      const salaId = json.salaId !== undefined ? Number(json.salaId) : sessoes[idx].salaId;
+      const inicioStr = json.dataHoraInicio || sessoes[idx].dataHoraInicio;
+      const fimStr = json.dataHoraFim || sessoes[idx].dataHoraFim;
+      const inicioMs = Date.parse(inicioStr);
+      const fimMs = Date.parse(fimStr);
+
+      if (isNaN(inicioMs) || isNaN(fimMs) || fimMs <= inicioMs) {
+        return sendJson(422, { error: "O fim da sessao deve ser posterior ao inicio." });
+      }
+      if (sessaoConflitante(salaId, inicioMs, fimMs, id)) {
+        return sendJson(422, { error: "Ja existe uma sessao nessa sala no periodo informado." });
+      }
+
+      if (json.filmeId !== undefined) {
+        const filme = filmes.find(f => f.id === Number(json.filmeId));
+        if (!filme) return sendJson(404, { error: `Filme com ID ${json.filmeId} nao encontrado.` });
+        sessoes[idx].filmeId = filme.id;
+      }
+      if (json.salaId !== undefined) {
+        const sala = salas.find(s => s.id === salaId);
+        if (!sala) return sendJson(404, { error: `Sala com ID ${salaId} nao encontrada.` });
+        sessoes[idx].salaId = sala.id;
+      }
+      sessoes[idx].dataHoraInicio = toLocal(new Date(inicioMs));
+      sessoes[idx].dataHoraFim = toLocal(new Date(fimMs));
+      if (json.status) sessoes[idx].status = json.status;
+      sessoes[idx].dataAtualizacao = new Date().toISOString();
+      return sendJson(200, enriquecerSessao(sessoes[idx]));
+    }
+
+    // Sessoes: DELETE /api/sessoes/:id
+    if (matchSessaoId && req.method === 'DELETE') {
+      const id = parseInt(matchSessaoId[1], 10);
+      const idx = sessoes.findIndex(s => s.id === id);
+      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
+      sessoes.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
     }
 
     // Filmes: POST /api/filmes (cadastro manual)
@@ -318,26 +432,6 @@ const server = http.createServer((req, res) => {
       return res.end();
     }
 
-    // Sessoes: PUT /api/sessoes/:id
-    if (matchSessaoId && req.method === 'PUT') {
-      const id = parseInt(matchSessaoId[1], 10);
-      const idx = sessoes.findIndex(s => s.id === id);
-      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
-      
-      sessoes[idx] = { ...sessoes[idx], ...json, id };
-      return sendJson(200, sessoes[idx]);
-    }
-
-    // Sessoes: DELETE /api/sessoes/:id
-    if (matchSessaoId && req.method === 'DELETE') {
-      const id = parseInt(matchSessaoId[1], 10);
-      const idx = sessoes.findIndex(s => s.id === id);
-      if (idx === -1) return sendJson(404, { error: "Sessão não encontrada" });
-      sessoes.splice(idx, 1);
-      res.writeHead(204);
-      return res.end();
-    }
-
     // 404 fallback
     sendJson(404, { error: "Rota não encontrada", path: pathname });
   });
@@ -345,8 +439,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`====================================================`);
-  console.log(`🎬 API REST - Sistema de Cinema (CRUD Produtos & Estoque)`);
-  console.log(`📡 Endpoints disponíveis em http://localhost:${PORT}/api/produtos`);
+  console.log(`🎬 API REST - Sistema de Cinema (Mock Express Node)`);
+  console.log(`📡 Endpoints disponíveis em http://localhost:${PORT}/api`);
   console.log(`✨ Pronto para receber requisições do frontend e Postman/Insomnia`);
   console.log(`====================================================`);
 });

@@ -3,15 +3,21 @@ package com.cinema;
 import com.cinema.entities.Filme;
 import com.cinema.entities.Produto;
 import com.cinema.entities.Sala;
+import com.cinema.entities.Sessao;
+import com.cinema.enums.StatusSessao;
 import com.cinema.repositories.FilmeRepository;
 import com.cinema.repositories.ProdutoRepository;
 import com.cinema.repositories.SalaRepository;
+import com.cinema.repositories.SessaoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.annotation.Order;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @SpringBootApplication
 public class CinemaApplication {
@@ -24,6 +30,7 @@ public class CinemaApplication {
      * Carga inicial com produtos do snack bar para testes imediatos (Seed)
      */
     @Bean
+    @Order(1)
     CommandLineRunner seedDatabase(ProdutoRepository repository) {
         return args -> {
             if (repository.count() == 0) {
@@ -43,6 +50,7 @@ public class CinemaApplication {
      * Carga inicial de salas para testes imediatos (Seed)
      */
     @Bean
+    @Order(2)
     CommandLineRunner seedSalas(SalaRepository repository) {
         return args -> {
             if (repository.count() == 0) {
@@ -60,6 +68,7 @@ public class CinemaApplication {
      * automaticamente via POST /api/filmes/buscar.
      */
     @Bean
+    @Order(3)
     CommandLineRunner seedFilmes(FilmeRepository repository) {
         return args -> {
             if (repository.count() == 0) {
@@ -68,6 +77,31 @@ public class CinemaApplication {
                 repository.save(new Filme(null, "Deadpool & Wolverine", "18", 128, "Wolverine e Deadpool unem forcas em uma aventura pelo multiverso.", "Acao, Comedia, Ficcao", null, null, null));
                 System.out.println(">> [SEED] Banco populado com 3 filmes iniciais no Catalogo!");
             }
+        };
+    }
+
+    /**
+     * Carga inicial de sessoes (normalizada com FK de filme e sala).
+     * Requer filme e salas previamente cadastrados.
+     */
+    @Bean
+    @Order(4)
+    CommandLineRunner seedSessoes(SessaoRepository sessaoRepository,
+                                  FilmeRepository filmeRepository,
+                                  SalaRepository salaRepository) {
+        return args -> {
+            if (sessaoRepository.count() > 0) return;
+
+            List<Filme> filmes = filmeRepository.findAll();
+            List<Sala> salas = salaRepository.findAll();
+            if (filmes.isEmpty() || salas.isEmpty()) return;
+
+            LocalDateTime hoje = LocalDateTime.now().withNano(0).withSecond(0);
+            Sessao s1 = new Sessao(null, filmes.get(0), salas.get(0), hoje.withHour(18), hoje.withHour(20).plusMinutes(4), StatusSessao.DISPONIVEL);
+            Sessao s2 = new Sessao(null, filmes.get(1), salas.get(1), hoje.withHour(20).plusMinutes(30), hoje.withHour(23).plusMinutes(16), StatusSessao.DISPONIVEL);
+            Sessao s3 = new Sessao(null, filmes.get(2), salas.get(2), hoje.withHour(21), hoje.withHour(23).plusMinutes(8), StatusSessao.ENCERRADA);
+            sessaoRepository.saveAll(List.of(s1, s2, s3));
+            System.out.println(">> [SEED] Banco populado com 3 sessoes iniciais!");
         };
     }
 }
