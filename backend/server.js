@@ -38,6 +38,19 @@ const salas = [
 ];
 let nextSalaId = 4;
 
+// Usuarios em memoria. Obs.: a senha nunca e devolvida nas respostas (contrato igual ao Java).
+const usuarios = [
+  { id: 1, nome: "Andresa Paula", email: "andresa.paula@cinemax.com.br", senha: "admin123", perfil: "GERENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 2, nome: "Rafael Lima", email: "rafael.lima@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 3, nome: "Beatriz Alves", email: "beatriz.alves@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 4, nome: "Diego Nunes", email: "diego.nunes@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: false, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
+];
+let nextUsuarioId = 5;
+
+function toUsuarioPublico(u) {
+  return { id: u.id, nome: u.nome, email: u.email, perfil: u.perfil, ativo: u.ativo, dataCadastro: u.dataCadastro, dataAtualizacao: u.dataAtualizacao };
+}
+
 // Formata em horario local (wall-clock), preservando o round-trip de datas
 // "offset-naive" que o cliente envia ("YYYY-MM-DDTHH:mm"). Usar toISOString()
 // (UTC) aqui deslocaria os horarios e quebraria a deteccao de conflitos.
@@ -180,6 +193,26 @@ const server = http.createServer((req, res) => {
     const item = salas.find(s => s.id === id);
     if (!item) return sendJson(404, { error: "Sala não encontrada", id });
     return sendJson(200, item);
+  }
+
+  // Usuarios: GET /api/usuarios (suporta ?busca= nome ou email)
+  if (pathname === '/api/usuarios' && req.method === 'GET') {
+    const { busca } = parsedUrl.query;
+    let list = [...usuarios];
+    if (busca) {
+      const q = busca.toLowerCase();
+      list = list.filter(u => u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    }
+    return sendJson(200, list.map(toUsuarioPublico));
+  }
+
+  // Usuarios: GET /api/usuarios/:id
+  const matchUsuarioId = pathname.match(/^\/api\/usuarios\/(\d+)$/);
+  if (matchUsuarioId && req.method === 'GET') {
+    const id = parseInt(matchUsuarioId[1], 10);
+    const item = usuarios.find(u => u.id === id);
+    if (!item) return sendJson(404, { error: "Usuário não encontrado", id });
+    return sendJson(200, toUsuarioPublico(item));
   }
 
   // Helper to read body
@@ -428,6 +461,65 @@ const server = http.createServer((req, res) => {
       const idx = salas.findIndex(s => s.id === id);
       if (idx === -1) return sendJson(404, { error: "Sala não encontrada" });
       salas.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // Usuarios: POST /api/usuarios
+    if (pathname === '/api/usuarios' && req.method === 'POST') {
+      const nome = (json.nome || '').trim();
+      const email = (json.email || '').trim();
+      const senha = String(json.senha || '');
+      if (!nome || !email || !senha) {
+        return sendJson(400, { error: "Campos obrigatorios ausentes: nome, email, senha" });
+      }
+      if (usuarios.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        return sendJson(422, { error: `Ja existe um usuario com o email ${email}.` });
+      }
+      const agora = new Date().toISOString();
+      const novo = {
+        id: nextUsuarioId++,
+        nome,
+        email,
+        senha,
+        perfil: ['GERENTE', 'ADMIN'].includes(json.perfil) ? json.perfil : 'FUNCIONARIO',
+        ativo: json.ativo !== undefined ? Boolean(json.ativo) : true,
+        dataCadastro: agora,
+        dataAtualizacao: agora
+      };
+      usuarios.push(novo);
+      return sendJson(201, toUsuarioPublico(novo));
+    }
+
+    // Usuarios: PUT /api/usuarios/:id
+    if (matchUsuarioId && req.method === 'PUT') {
+      const id = parseInt(matchUsuarioId[1], 10);
+      const idx = usuarios.findIndex(u => u.id === id);
+      if (idx === -1) return sendJson(404, { error: "Usuário não encontrado" });
+
+      const email = (json.email !== undefined ? String(json.email).trim() : usuarios[idx].email);
+      if (usuarios.some(u => u.id !== id && u.email.toLowerCase() === email.toLowerCase())) {
+        return sendJson(422, { error: `Ja existe um usuario com o email ${email}.` });
+      }
+
+      if (json.nome !== undefined) usuarios[idx].nome = String(json.nome).trim();
+      usuarios[idx].email = email;
+      const novaSenha = String(json.senha || '');
+      if (novaSenha) usuarios[idx].senha = novaSenha;
+      if (json.perfil !== undefined && ['GERENTE', 'ADMIN', 'FUNCIONARIO'].includes(json.perfil)) {
+        usuarios[idx].perfil = json.perfil;
+      }
+      if (json.ativo !== undefined) usuarios[idx].ativo = Boolean(json.ativo);
+      usuarios[idx].dataAtualizacao = new Date().toISOString();
+      return sendJson(200, toUsuarioPublico(usuarios[idx]));
+    }
+
+    // Usuarios: DELETE /api/usuarios/:id
+    if (matchUsuarioId && req.method === 'DELETE') {
+      const id = parseInt(matchUsuarioId[1], 10);
+      const idx = usuarios.findIndex(u => u.id === id);
+      if (idx === -1) return sendJson(404, { error: "Usuário não encontrado" });
+      usuarios.splice(idx, 1);
       res.writeHead(204);
       return res.end();
     }
