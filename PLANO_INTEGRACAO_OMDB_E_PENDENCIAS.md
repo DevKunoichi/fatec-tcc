@@ -3,7 +3,7 @@
 **Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cinemax)
 **Data original:** 2026-09-17
 **Última atualização:** 2026-09-19
-**Status:** Em andamento — Fase 1 ✅ e Fase 2 ✅ concluídas e commitadas; aguardando teste do usuário + chave OMDb; próximo passo: Fase 3
+**Status:** Em andamento — Fase 1 ✅, Fase 2 ✅ e Fase 3 ✅ concluídas e commitadas; demo com CRUD de Usuários no mock ✅; aguardando chave OMDb para teste real da busca; próximo passo: Fase 4
 
 ---
 
@@ -187,7 +187,7 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 | 8 | **MovimentacaoEstoque** | ❌ (só DTO) | ❌ (só DTO) | ❌ | ✅ produto_id FK, tipo, quantidade, data |
 | 9 | **PedidoVenda** | ❌ | ❌ | ❌ | ✅ usuario_id FK, valor_total, forma_pagamento, data_venda |
 
-**Status: 4 de 9 entidades implementadas na API Java (44%)**
+**Status: 6 de 9 entidades implementadas na API Java (67%)**
 
 ### 2.2 Frontend: Status das Pages
 
@@ -308,7 +308,7 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 - [x] `SessaoService.java` — CRUD + validações:
   - [x] Não pode criar sessão com conflito de horário na mesma sala (sessões CANCELADAS ignoradas)
   - [x] `dataHoraFim` deve ser posterior a `dataHoraInicio`
-  - [ ] Status automático: LOTADA quando ingressos = capacidade da sala — depende da Fase 3 (Ingressos); hoje `ingressosVendidos` será 0
+  - [x] Status automático: LOTADA quando ingressos = capacidade da sala — implementado na Fase 3 (`70439da`), com `ingressosVendidos` real no response
 - [x] `SessaoController.java` — GET/POST/PUT/DELETE `/api/sessoes`
 
 **Frontend:**
@@ -326,24 +326,30 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 
 **Objetivo:** Gerenciar mapa de assentos e venda de ingressos.
 
+> **Implementada** no commit `70439da` (branch `feat/fase3-assentos-ingressos`).
+
 **Backend:**
-- [ ] `Assento.java` — Entity JPA: `id`, `sala` (ManyToOne → Sala), `fileira` (String, max 5), `numero` (Integer), `status` (enum: DISPONIVEL, RESERVADO, INDISPONIVEL)
-- [ ] `Ingresso.java` — Entity JPA: `id`, `sessao` (ManyToOne → Sessao), `assento` (ManyToOne → Assento), `usuario` (ManyToOne → Usuario), `valor` (BigDecimal), `status` (enum: DISPONIVEL, RESERVADO, VENDIDO, UTILIZADO), `dataCompra`
-- [ ] CRUD para ambos
-- [ ] Endpoint `GET /api/sessoes/{id}/assentos` — mapa de assentos da sessão
-- [ ] Endpoint `POST /api/ingressos/comprar` — compra com validação de disponibilidade
-- [ ] Seed: gerar assentos automaticamente ao criar Sala (ex: fileiras A-J, 20 assentos cada)
-- [ ] Validação: não vender assento já vendido/reservado para a mesma sessão
+- [x] `Assento.java` — Entity JPA: `id`, `sala` (ManyToOne → Sala), `fileira` (String, max 5), `numero` (Integer), `status` (enum: DISPONIVEL, RESERVADO, INDISPONIVEL)
+- [x] `Ingresso.java` — Entity JPA: `id`, `sessao` (ManyToOne → Sessao), `assento` (ManyToOne → Assento), `nomeCliente` (placeholder — a FK `usuario` entra na Fase 4), `valor` (BigDecimal), `status` (enum: DISPONIVEL, RESERVADO, VENDIDO, UTILIZADO, INDISPONIVEL), `dataCompra`
+- [x] CRUD para ambos (AssentoController, IngressoController)
+- [x] Endpoint `GET /api/sessoes/{id}/assentos` — mapa de assentos da sessão (estado real por assento)
+- [x] Endpoint `POST /api/ingressos/comprar` — compra com validação de disponibilidade
+- [x] Seed: assentos gerados automaticamente ao criar Sala (fileiras A.., até 20 por fileira, respeitando a capacidade) + backfill no boot (`@Order 5`)
+- [x] Validação: não vender assento já vendido/reservado para a mesma sessão (422)
+- [x] `ingressosVendidos` real e status `LOTADA` automático quando a sala lota
 
 **Frontend:**
-- [ ] Componente `MapaAssentos.jsx` — grid visual de assentos (cores: disponível/reservado/indisponível)
-- [ ] Fluxo de compra: selecionar assentos → revisar → confirmar
+- [x] Componente `MapaAssentos.jsx` — grid visual de assentos (cores: disponível/reservado/vendido/indisponível)
+- [x] Fluxo de compra: selecionar assentos → revisar → confirmar
 
 ---
 
 ### Fase 4 — Usuários + Segurança (Spring Security + JWT)
 
 **Objetivo:** Autenticação e controle de acesso.
+
+> A **demo no mock** do CRUD de usuários já está pronta (branch `feat/demo-usuarios-mock`,
+> commits `d0b2abf`/`b1375e9`). Esta fase implementa a **parte Java** (entidade + segurança).
 
 **Backend:**
 - [ ] `Usuario.java` — Entity JPA: `id`, `nome`, `email` (unique), `senhaHash`, `perfil` (enum: ADMIN, GERENTE, ATENDENTE, CLIENTE), `ativo`, `dataCadastro`
@@ -602,4 +608,4 @@ O `application.properties` **não muda** nas duas opções — permanece `omdb.a
 
 ---
 
-*Plano original criado em 2026-09-17. Atualizado em 2026-09-19 (Fases 1 e 2 concluídas, auditoria de qualidade, correções de segurança/limpeza — sprints `e27e894`/`033c22e`/`ebb90ec`). Próximo passo: teste das Fases 1 e 2 pelo usuário + chave OMDb → Fase 3 (Assentos + Ingressos).*
+*Plano original criado em 2026-09-17. Atualizado em 2026-09-20 (Fase 3 — Assentos + Ingressos — concluída no sprint `70439da`; demo com 3 CRUDs no mock em `d0b2abf`/`b1375e9`; Fases 1 e 2 nos sprints `7c2c2a1`/`e27e894`/`033c22e`/`ebb90ec`). Próximo passo: Fase 4 (Usuários + Segurança no Java) — dependente do teste do usuário + chave OMDb.*

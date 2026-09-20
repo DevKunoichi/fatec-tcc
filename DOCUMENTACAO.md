@@ -149,8 +149,18 @@ campos `datetime-local` (início/fim), badge e select de status, ocupação
 
 ### 4.4 Usuários
 
-- `UsuariosPage` é **placeholder estático** ("Em Desenvolvimento"). Autenticação
-  (Spring Security + JWT) prevista na Fase 4.
+- `UsuariosPage` com **CRUD completo na demo (mock)** — lista com busca, criar,
+  editar (senha opcional), ativar/desativar, excluir; senha nunca é devolvida
+  pela API. A parte **Java (entidade + Spring Security + JWT)** fica na Fase 4.
+
+### 4.5 Assentos e Ingressos (Fase 3)
+
+- `MapaAssentos.jsx` — grid visual (TELA DO CINEMA + fileiras A..), assentos
+  coloridos por estado (disponível/reservado/vendido/utilizado/indisponível),
+  seleção múltipla → revisão → confirmação de compra (nome do cliente), e tela
+  de sucesso com o total. Abra em "Assentos" em cada sessão da `SessoesPage`.
+- `ingressosVendidos` e `vagasDisponiveis` da sessão passam a ser **reais**, e o
+  status **LOTADA** é aplicado automaticamente quando a sala lota.
 
 ---
 
@@ -172,8 +182,14 @@ campos `datetime-local` (início/fim), badge e select de status, ocupação
 | POST | `/api/sessoes` | ✅ | ✅ | 201; conflito 422 |
 | PUT | `/api/sessoes/{id}` | ✅ | ✅ | |
 | DELETE | `/api/sessoes/{id}` | ✅ | ✅ | |
-| GET | `/api/sessoes/{id}/assentos` | ❌ | ❌ | irá na Fase 3 |
-| POST | `/api/ingressos/comprar` | ❌ | ❌ | irá na Fase 3 |
+| GET | `/api/sessoes/{id}/assentos` | ✅ | ✅ | mapa real por assento |
+| GET | `/api/assentos` · `/api/assentos/{id}` | ✅ | ✅ | `?salaId=` filtra |
+| POST/PUT/DELETE | `/api/assentos...` | ✅ | ✅ | duplicidade 422 |
+| GET | `/api/ingressos` · `/api/ingressos/{id}` | ✅ | ✅ | |
+| GET | `/api/ingressos/sessoes/{id}` | ✅ | ✅ | ingressos da sessão |
+| POST | `/api/ingressos` | ✅ | ✅ | avulso |
+| POST | `/api/ingressos/comprar` | ✅ | ✅ | lote; assento já vendido 422 |
+| PUT/DELETE | `/api/ingressos/{id}` | ✅ | ✅ | |
 | POST | `/api/auth/login` | ❌ | ❌ | irá na Fase 4 |
 
 **Formato de erro padrão (Java)** — `GlobalExceptionHandler`:
@@ -200,8 +216,8 @@ campos `datetime-local` (início/fim), badge e select de status, ocupação
 - **H2 console** ativo apenas local (`web-allow-others=false`).
 - **Chave OMDb via environment**: `omdb.api-key=${OMDB_API_KEY:}`; erro sanitizado
   (mensagem genérica + log sem URL) para nunca expor a chave.
-- **Seeds com `@Order` (1→4)**: produtos → salas → filmes → sessões (sessões
-  dependem de filmes/salas já populados).
+- **Seeds com `@Order` (1→5)**: produtos → salas → filmes → sessões → assentos
+  das salas (assentos dependem de salas; backfill nas salas das fases anteriores).
 - **Mock em `127.0.0.1`** e com `toLocal()` em **wall-clock local** (evita deslocamento
   de fuso que quebraria a detecção de conflito); `POST /api/filmes/buscar` → `200`
   (novo e repetido), alinhado ao contrato Java.
@@ -290,11 +306,18 @@ relacionada à conta GitHub.
 | `e27e894` | `feat/fase1-sala-filme-omdb` | Segurança e limpeza pós-auditoria (CORS, chave OMDb, H2, mock, remoção de arquivos corrompidos) |
 | `033c22e` | `feat/fase1-sala-filme-omdb` | Spring Boot 3.3.4 → **3.5.16** |
 | `ebb90ec` | `feat/fase2-sessao-normalizada` | Fase 2: `Sessao` com FKs, `StatusSessao`, CRUD + conflito, mock e página refatorados |
+| `5c8059b` | `feat/fase2-sessao-normalizada` | Docs: `DOCUMENTACAO.md` criada e `PLANO_INTEGRACAO_OMDB_E_PENDENCIAS.md` copiado para a raiz |
+| `92317ea` | `feat/fase2-sessao-normalizada` | Rebrand da marca: Novelino → **Cinemax** |
+| `95aef6e` | `feat/fase2-sessao-normalizada` | Fix página `/produtos` (TDZ) + `ErrorBoundary` + padronização da marca Cinemax |
+| `d0b2abf` | `feat/demo-usuarios-mock` | Fase 4 (demo/mock): CRUD de usuários completo + seed, senha nunca exposta na API |
+| `b1375e9` | `feat/demo-usuarios-mock` | Contadores das abas dinâmicos (nº real de sessoes/produtos/usuarios) |
+| `70439da` | `feat/fase3-assentos-ingressos` | **Fase 3**: `Assento`/`Ingresso`, mapa, compra, LOTADA automática e `MapaAssentos.jsx` |
 
 **Remoto:** `origin` = `git@github.com:DevKunoichi/fatec-tcc.git`.
 
-> ⚠️ As branches `fix/tailwind-v4-build`, `feat/fase1-sala-filme-omdb` e
-> `feat/fase2-sessao-normalizada` **ainda não foram enviadas ao remoto** (push
+> ⚠️ As branches `fix/tailwind-v4-build`, `feat/fase1-sala-filme-omdb`,
+> `feat/fase2-sessao-normalizada`, `feat/demo-usuarios-mock` e
+> `feat/fase3-assentos-ingressos` **ainda não foram enviadas ao remoto** (push
 > bloqueado por permissão — ver Pendências).
 
 ---
@@ -307,8 +330,13 @@ relacionada à conta GitHub.
 - [x] Auditoria de qualidade (clean code, boas práticas, versões, segurança)
 - [x] **Lote de correções "Agora"** — `e27e894` + `033c22e`
 - [x] **Fase 2** — Sessão normalizada — `ebb90ec`
+- [x] Documentação do projeto + plano na raiz — `5c8059b`
+- [x] Rebrand Novelino → **Cinemax** — `92317ea` + `95aef6e`
+- [x] Fix `/produtos` (página em branco) + `ErrorBoundary` — `95aef6e`
+- [x] **Demo dos 3 CRUDs**: CRUD de Usuários no mock + contadores dinâmicos — `d0b2abf` + `b1375e9`
+- [x] **Fase 3** — Assentos + Ingressos (mapa, compra, LOTADA) — `70439da`
 
-**Entidades na API Java: 4 de 9 (44%)** — Produto, Sala, Filme, Sessao.
+**Entidades na API Java: 6 de 9 (67%)** — Produto, Sala, Filme, Sessao, Assento, Ingresso.
 
 ### ⏳ Pendências operacionais
 | # | Item | Detalhe |
@@ -316,7 +344,7 @@ relacionada à conta GitHub.
 | 1 | **Chave OMDb** | Aguardando a DevKunoichi fornecer a chave gratuita (https://www.omdbapi.com/apikey.aspx). |
 | 2 | **Decisão: onde guardar a chave** | Opção A (recomendada): `spring-dotenv` + `backend/.env` gitignored. Opção B: variável de ambiente do SO. |
 | 3 | **Push das branches** | Chave SSH local (`Leporoni`) sem permissão de escrita no repo `DevKunoichi/fatec-tcc`. Resolver: adicionar Leporoni como colaborador **ou** fork + PR. |
-| 4 | **Teste do usuário** | Rodar Fases 1 e 2 localmente (frontend + mock na 8080 ou Java). |
+| 4 | **Teste do usuário** | Rodar localmente (frontend + mock na 8080 ou Java). |
 | 5 | **Banco persistente** | H2 em memória hoje; PostgreSQL planejado na Fase 6. |
 
 ### 🔧 Melhorias mapeadas (auditoria) — status aberto
@@ -334,12 +362,9 @@ relacionada à conta GitHub.
 - **Média (docs):** `docs/crud.md` com referências quebradas.
 
 ### 🚀 Próximas fases
-- **Fase 3 — Assentos + Ingressos:** `Assento` e `Ingresso` (JPA), mapa de assentos
-  (`GET /api/sessoes/{id}/assentos`), compra (`POST /api/ingressos/comprar`) com
-  validação (não vender assento já vendido/reservado), seed de assentos por sala;
-  frontend `MapaAssentos.jsx` + fluxo de compra. *Nota: nessa fase passa a existir
-  `ingressosVendidos` real e o `status LOTADA` automático da sessão.*
-- **Fase 4 — Usuários + Segurança:** `Usuario`, Spring Security + JWT, `/api/auth/login`.
+- **Fase 4 — Usuários + Segurança (Java):** entidade `Usuario` (hoje só no mock),
+  Spring Security + JWT, `/api/auth/login`, senhas BCrypt, rotas protegidas; o
+  `nomeCliente` do Ingresso passa a ser FK `Usuario`.
 - **Fase 5 — Estoque audit + Pedidos:** `MovimentacaoEstoque` (auditoria) e
   `PedidoVenda` + relatórios.
 - **Fase 6 — Infraestrutura e Limpeza:** perfis dev/prod, PostgreSQL + Flyway,
