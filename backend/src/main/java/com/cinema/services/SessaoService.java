@@ -5,10 +5,12 @@ import com.cinema.dtos.SessaoResponseDTO;
 import com.cinema.entities.Filme;
 import com.cinema.entities.Sala;
 import com.cinema.entities.Sessao;
+import com.cinema.enums.StatusIngresso;
 import com.cinema.enums.StatusSessao;
 import com.cinema.exceptions.RegraNegocioException;
 import com.cinema.exceptions.ResourceNotFoundException;
 import com.cinema.repositories.FilmeRepository;
+import com.cinema.repositories.IngressoRepository;
 import com.cinema.repositories.SalaRepository;
 import com.cinema.repositories.SessaoRepository;
 import org.springframework.stereotype.Service;
@@ -23,23 +25,26 @@ public class SessaoService {
     private final SessaoRepository repository;
     private final FilmeRepository filmeRepository;
     private final SalaRepository salaRepository;
+    private final IngressoRepository ingressoRepository;
 
     public SessaoService(SessaoRepository repository,
                          FilmeRepository filmeRepository,
-                         SalaRepository salaRepository) {
+                         SalaRepository salaRepository,
+                         IngressoRepository ingressoRepository) {
         this.repository = repository;
         this.filmeRepository = filmeRepository;
         this.salaRepository = salaRepository;
+        this.ingressoRepository = ingressoRepository;
     }
 
     @Transactional(readOnly = true)
     public List<SessaoResponseDTO> listar() {
-        return repository.findAll().stream().map(SessaoResponseDTO::fromEntity).toList();
+        return repository.findAll().stream().map(s -> toResponse(s)).toList();
     }
 
     @Transactional(readOnly = true)
     public SessaoResponseDTO buscarPorId(Long id) {
-        return SessaoResponseDTO.fromEntity(requireSessao(id));
+        return toResponse(requireSessao(id));
     }
 
     @Transactional
@@ -57,7 +62,7 @@ public class SessaoService {
             dto.dataHoraFim(),
             StatusSessao.DISPONIVEL
         );
-        return SessaoResponseDTO.fromEntity(repository.save(s));
+        return toResponse(repository.save(s));
     }
 
     @Transactional
@@ -80,7 +85,7 @@ public class SessaoService {
         s.setDataHoraFim(fim);
         if (dto.status() != null) s.setStatus(dto.status());
 
-        return SessaoResponseDTO.fromEntity(repository.save(s));
+        return toResponse(repository.save(s));
     }
 
     @Transactional
@@ -95,6 +100,14 @@ public class SessaoService {
         if (!fim.isAfter(inicio)) {
             throw new RegraNegocioException("O fim da sessao deve ser posterior ao inicio.");
         }
+    }
+
+    private SessaoResponseDTO toResponse(Sessao s) {
+        int ingressosVendidos = (int) ingressoRepository.countBySessaoIdAndStatusIn(
+                s.getId(),
+                List.of(StatusIngresso.RESERVADO, StatusIngresso.VENDIDO, StatusIngresso.UTILIZADO)
+        );
+        return SessaoResponseDTO.fromEntity(s, ingressosVendidos);
     }
 
     private void validarConflito(Long salaId, LocalDateTime inicio, LocalDateTime fim, Long idSelf) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import BuscaFilmeModal from '../components/filmes/BuscaFilmeModal';
+import MapaAssentos from '../components/assentos/MapaAssentos';
 
 const STATUS_LABEL = {
   DISPONIVEL: 'Disponível',
@@ -44,6 +45,7 @@ const SessoesPage = () => {
   });
   const [erro, setErro] = useState('');
   const [isBuscaOpen, setIsBuscaOpen] = useState(false);
+  const [mapaSessao, setMapaSessao] = useState(null);
 
   useEffect(() => {
     fetchSessoes();
@@ -181,7 +183,7 @@ const SessoesPage = () => {
     <div>
       <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
         <div>
-          <div className="text-[#1B4BA0] text-[10.5px] uppercase tracking-wider mb-2 font-bold">CRUD 01 · FASE 2</div>
+          <div className="text-[#1B4BA0] text-[10.5px] uppercase tracking-wider mb-2 font-bold">CRUD 01 · FASE 3</div>
           <h1 className="text-3xl font-extrabold text-[#16295B] m-0">Sessões de filmes</h1>
           <p className="text-gray-600 mt-2">Programação e gerenciamento de salas.</p>
         </div>
@@ -247,6 +249,7 @@ const SessoesPage = () => {
                     </span>
                   </td>
                   <td className="p-4 text-center space-x-3">
+                    <button onClick={() => setMapaSessao(s)} className="text-emerald-700 hover:underline text-sm font-medium cursor-pointer">Assentos</button>
                     <button onClick={() => openModal('editar', s)} className="text-[#1B4BA0] hover:underline text-sm font-medium cursor-pointer">Editar</button>
                     <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline text-sm font-medium cursor-pointer">Excluir</button>
                   </td>
@@ -349,6 +352,15 @@ const SessoesPage = () => {
         open={isBuscaOpen}
         onClose={() => setIsBuscaOpen(false)}
         onSelecionar={handleSelecionarFilme}
+      />
+
+      <MapaAssentos
+        sessao={mapaSessao}
+        open={!!mapaSessao}
+        onClose={() => {
+          setMapaSessao(null);
+          fetchSessoes();
+        }}
       />
     </div>
   );
