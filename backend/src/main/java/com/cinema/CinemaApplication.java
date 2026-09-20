@@ -9,6 +9,7 @@ import com.cinema.repositories.FilmeRepository;
 import com.cinema.repositories.ProdutoRepository;
 import com.cinema.repositories.SalaRepository;
 import com.cinema.repositories.SessaoRepository;
+import com.cinema.services.AssentoService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -102,6 +103,21 @@ public class CinemaApplication {
             Sessao s3 = new Sessao(null, filmes.get(2), salas.get(2), hoje.withHour(21), hoje.withHour(23).plusMinutes(8), StatusSessao.ENCERRADA);
             sessaoRepository.saveAll(List.of(s1, s2, s3));
             System.out.println(">> [SEED] Banco populado com 3 sessoes iniciais!");
+        };
+    }
+
+    /**
+     * Garante que toda sala possui o grid de assentos (backfill da Fase 3).
+     * Executa apos salas e sessoes, tambem cobre salas criadas nas fases anteriores.
+     */
+    @Bean
+    @Order(5)
+    CommandLineRunner seedAssentosDaSala(SalaRepository salaRepository, AssentoService assentoService) {
+        return args -> {
+            for (Sala sala : salaRepository.findAll()) {
+                assentoService.gerarAssentosParaSala(sala);
+            }
+            System.out.println(">> [SEED] Assentos das salas verificados (backfill executado).");
         };
     }
 }

@@ -16,10 +16,9 @@ public record SessaoResponseDTO(
     LocalDateTime dataCadastro,
     LocalDateTime dataAtualizacao
 ) {
-    public static SessaoResponseDTO fromEntity(Sessao s) {
-        // Ingressos ainda nao existem (Fase 3); por ora nenhum assento foi vendido.
-        int ingressosVendidos = 0;
-        int vagasDisponiveis = s.getSala().getCapacidadeTotal() - ingressosVendidos;
+    public static SessaoResponseDTO fromEntity(Sessao s, int ingressosVendidos) {
+        int vendidos = Math.max(0, ingressosVendidos);
+        int vagasDisponiveis = s.getSala().getCapacidadeTotal() - vendidos;
         return new SessaoResponseDTO(
             s.getId(),
             FilmeResponseDTO.fromEntity(s.getFilme()),
@@ -27,7 +26,7 @@ public record SessaoResponseDTO(
             s.getDataHoraInicio(),
             s.getDataHoraFim(),
             s.getStatus(),
-            ingressosVendidos,
+            vendidos,
             vagasDisponiveis,
             s.getDataCadastro(),
             s.getDataAtualizacao()

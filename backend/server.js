@@ -51,6 +51,53 @@ function toUsuarioPublico(u) {
   return { id: u.id, nome: u.nome, email: u.email, perfil: u.perfil, ativo: u.ativo, dataCadastro: u.dataCadastro, dataAtualizacao: u.dataAtualizacao };
 }
 
+// Fase 3 - Assentos e Ingressos (espelhando o JPA: Assento pertence a Sala; Ingresso pertence a Sessao+Assento)
+const VALOR_INGRESSO = 25.00;
+const statusIngresso = {
+  DISPONIVEL: 'DISPONIVEL',
+  RESERVADO: 'RESERVADO',
+  VENDIDO: 'VENDIDO',
+  UTILIZADO: 'UTILIZADO',
+  INDISPONIVEL: 'INDISPONIVEL'
+};
+const assentos = [];
+const ingressos = [];
+let nextAssentoId = 0;
+let nextIngressoId = 0;
+
+// Gera o grid da sala (fileiras a partir de A, ate 20 assentos por fileira) respeitando a capacidade.
+function gerarAssentos(sala) {
+  const cap = sala.capacidadeTotal || 0;
+  if (cap <= 0) return;
+  const porFileira = 20;
+  const fileiras = Math.ceil(cap / porFileira);
+  let restante = cap;
+  for (let r = 0; r < fileiras && restante > 0; r++) {
+    const fileira = String.fromCharCode(65 + r);
+    const n = Math.min(porFileira, restante);
+    for (let i = 1; i <= n; i++) {
+      assentos.push({ id: ++nextAssentoId, salaId: sala.id, fileira, numero: i, status: 'DISPONIVEL' });
+    }
+    restante -= n;
+  }
+}
+function gerarAssentosSeNecessario(sala) {
+  if (!assentos.some(a => a.salaId === sala.id)) gerarAssentos(sala);
+}
+// Backfill para as salas do seed
+salas.forEach(gerarAssentos);
+
+function ingressosDaSessao(sessaoId) {
+  return ingressos.filter(i => i.sessaoId === sessaoId);
+}
+function ingressosVendidosDe(sessaoId) {
+  return ingressosDaSessao(sessaoId).filter(i => ['RESERVADO', 'VENDIDO', 'UTILIZADO'].includes(i.status)).length;
+}
+function sessaoCheia(sessao) {
+  const sala = salas.find(sl => sl.id === sessao.salaId);
+  return !!sala && sessao.status !== sessoesEstado.CANCELADA && ingressosVendidosDe(sessao.id) >= sala.capacidadeTotal;
+}
+
 // Formata em horario local (wall-clock), preservando o round-trip de datas
 // "offset-naive" que o cliente envia ("YYYY-MM-DDTHH:mm"). Usar toISOString()
 // (UTC) aqui deslocaria os horarios e quebraria a deteccao de conflitos.
@@ -78,7 +125,8 @@ function updateStatus(p) {
 function enriquecerSessao(s) {
   const filme = filmes.find(f => f.id === s.filmeId);
   const sala = salas.find(sl => sl.id === s.salaId);
-  const ingressosVendidos = 0; // Ingressos implementados em fase futura.
+  if (sessaoCheia(s)) s.status = sessoesEstado.LOTADA;
+  const ingressosVendidos = ingressosVendidosDe(s.id);
   return {
     id: s.id,
     filme: filme || null,
@@ -213,6 +261,81 @@ const server = http.createServer((req, res) => {
     const item = usuarios.find(u => u.id === id);
     if (!item) return sendJson(404, { error: "Usuário não encontrado", id });
     return sendJson(200, toUsuarioPublico(item));
+  }
+
+  // Sessoes: GET /api/sessoes/:id/assentos (mapa de assentos da sessao)
+  const matchSessaoAssentos = pathname.match(/^\/api\/sessoes\/(\d+)\/assentos$/);
+  if (matchSessaoAssentos && req.method === 'GET') {
+    const sessaoId = parseInt(matchSessaoAssentos[1], 10);
+    const sessao = sessoes.find(s => s.id === sessaoId);
+    if (!sessao) return sendJson(404, { error: "Sessão não encontrada", id: sessaoId });
+
+    const sala = salas.find(sl => sl.id === sessao.salaId);
+    if (!sala) return sendJson(404, { error: "Sala da sessão não encontrada" });
+
+    const statusPorAssento = {};
+    ingressosDaSessao(sessaoId).forEach(i => { statusPorAssento[i.assentoId] = i.status; });
+
+    const assentosMapa = assentos
+      .filter(a => a.salaId === sala.id)
+      .sort((a, b) => a.fileira.localeCompare(b.fileira) || a.numero - b.numero)
+      .map(a => ({
+        id: a.id,
+        fileira: a.fileira,
+        numero: a.numero,
+        status: statusPorAssento[a.id] || (a.status === 'INDISPONIVEL' ? statusIngresso.INDISPONIVEL : statusIngresso.DISPONIVEL)
+      }));
+
+    const vendidos = ingressosVendidosDe(sessaoId);
+    return sendJson(200, {
+      sessaoId: sessao.id,
+      filme: filmes.find(f => f.id === sessao.filmeId) || null,
+      sala,
+      dataHoraInicio: sessao.dataHoraInicio,
+      ingressosVendidos: vendidos,
+      vagasDisponiveis: sala.capacidadeTotal - vendidos,
+      assentos: assentosMapa
+    });
+  }
+
+  // Assentos: GET /api/assentos (suporta ?salaId=)
+  if (pathname === '/api/assentos' && req.method === 'GET') {
+    const { salaId } = parsedUrl.query;
+    const lista = salaId
+      ? assentos.filter(a => a.salaId === Number(salaId))
+      : [...assentos];
+    return sendJson(200, lista);
+  }
+
+  // Assentos: GET /api/assentos/:id
+  const matchAssentoId = pathname.match(/^\/api\/assentos\/(\d+)$/);
+  if (matchAssentoId && req.method === 'GET') {
+    const id = parseInt(matchAssentoId[1], 10);
+    const item = assentos.find(a => a.id === id);
+    if (!item) return sendJson(404, { error: "Assento não encontrado", id });
+    return sendJson(200, item);
+  }
+
+  // Ingressos: GET /api/ingressos
+  if (pathname === '/api/ingressos' && req.method === 'GET') {
+    return sendJson(200, ingressos);
+  }
+
+  // Ingressos: GET /api/ingressos/sessoes/:id (ingressos da sessao)
+  const matchIngressosSessao = pathname.match(/^\/api\/ingressos\/sessoes\/(\d+)$/);
+  if (matchIngressosSessao && req.method === 'GET') {
+    const sessaoId = parseInt(matchIngressosSessao[1], 10);
+    if (!sessoes.some(s => s.id === sessaoId)) return sendJson(404, { error: "Sessão não encontrada", id: sessaoId });
+    return sendJson(200, ingressosDaSessao(sessaoId));
+  }
+
+  // Ingressos: GET /api/ingressos/:id
+  const matchIngressoId = pathname.match(/^\/api\/ingressos\/(\d+)$/);
+  if (matchIngressoId && req.method === 'GET') {
+    const id = parseInt(matchIngressoId[1], 10);
+    const item = ingressos.find(i => i.id === id);
+    if (!item) return sendJson(404, { error: "Ingresso não encontrado", id });
+    return sendJson(200, item);
   }
 
   // Helper to read body
@@ -452,6 +575,7 @@ const server = http.createServer((req, res) => {
         dataAtualizacao: new Date().toISOString()
       };
       salas.push(nova);
+      gerarAssentosSeNecessario(nova);
       return sendJson(201, nova);
     }
 
@@ -461,6 +585,199 @@ const server = http.createServer((req, res) => {
       const idx = salas.findIndex(s => s.id === id);
       if (idx === -1) return sendJson(404, { error: "Sala não encontrada" });
       salas.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // Assentos: POST /api/assentos
+    if (pathname === '/api/assentos' && req.method === 'POST') {
+      if (!json.salaId || !json.fileira || json.numero === undefined) {
+        return sendJson(400, { error: "Campos obrigatorios ausentes: salaId, fileira, numero" });
+      }
+      const salaId = Number(json.salaId);
+      if (!salas.some(s => s.id === salaId)) return sendJson(404, { error: `Sala com ID ${salaId} nao encontrada.` });
+      const fileira = String(json.fileira).trim().toUpperCase();
+      if (fileira.length > 5) return sendJson(422, { error: "A fileira deve ter no maximo 5 caracteres." });
+      const numero = Number(json.numero);
+      if (numero <= 0) return sendJson(422, { error: "O numero do assento deve ser um inteiro positivo." });
+      if (assentos.some(a => a.salaId === salaId && a.fileira === fileira && a.numero === numero)) {
+        return sendJson(422, { error: "Ja existe um assento com esse numero na fileira dessa sala." });
+      }
+      const novo = {
+        id: ++nextAssentoId,
+        salaId,
+        fileira,
+        numero,
+        status: ['DISPONIVEL', 'RESERVADO', 'INDISPONIVEL'].includes(json.status) ? json.status : 'DISPONIVEL'
+      };
+      assentos.push(novo);
+      return sendJson(201, novo);
+    }
+
+    // Assentos: PUT /api/assentos/:id
+    if (matchAssentoId && req.method === 'PUT') {
+      const id = parseInt(matchAssentoId[1], 10);
+      const idx = assentos.findIndex(a => a.id === id);
+      if (idx === -1) return sendJson(404, { error: "Assento não encontrado" });
+
+      const salaId = json.salaId !== undefined ? Number(json.salaId) : assentos[idx].salaId;
+      const fileira = json.fileira !== undefined ? String(json.fileira).trim().toUpperCase() : assentos[idx].fileira;
+      const numero = json.numero !== undefined ? Number(json.numero) : assentos[idx].numero;
+      if (fileira.length > 5) return sendJson(422, { error: "A fileira deve ter no maximo 5 caracteres." });
+      if (numero !== undefined && numero <= 0) return sendJson(422, { error: "O numero do assento deve ser um inteiro positivo." });
+      if (assentos.some(a => a.id !== id && a.salaId === salaId && a.fileira === fileira && a.numero === numero)) {
+        return sendJson(422, { error: "Ja existe um assento com esse numero na fileira dessa sala." });
+      }
+      if (json.salaId !== undefined && !salas.some(s => s.id === salaId)) {
+        return sendJson(404, { error: `Sala com ID ${salaId} nao encontrada.` });
+      }
+
+      assentos[idx].salaId = salaId;
+      assentos[idx].fileira = fileira;
+      assentos[idx].numero = numero;
+      if (json.status !== undefined) assentos[idx].status = json.status;
+      return sendJson(200, assentos[idx]);
+    }
+
+    // Assentos: DELETE /api/assentos/:id
+    if (matchAssentoId && req.method === 'DELETE') {
+      const id = parseInt(matchAssentoId[1], 10);
+      const idx = assentos.findIndex(a => a.id === id);
+      if (idx === -1) return sendJson(404, { error: "Assento não encontrado" });
+      if (ingressos.some(i => i.assentoId === id)) {
+        return sendJson(422, { error: "Nao e possivel excluir um assento que ja possui ingresso." });
+      }
+      assentos.splice(idx, 1);
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // Ingressos: POST /api/ingressos/comprar (compra em lote com validacoes)
+    if (pathname === '/api/ingressos/comprar' && req.method === 'POST') {
+      const sessaoId = Number(json.sessaoId);
+      const assentoIds = Array.isArray(json.assentoIds) ? json.assentoIds.map(Number) : [];
+      const nomeCliente = (json.nomeCliente || '').trim();
+
+      if (!sessaoId) return sendJson(422, { error: "Informe o id da sessao." });
+      if (assentoIds.length === 0) return sendJson(422, { error: "Selecione ao menos um assento." });
+      if (!nomeCliente) return sendJson(422, { error: "Informe o nome do cliente." });
+      if (new Set(assentoIds).size !== assentoIds.length) {
+        return sendJson(422, { error: "Ha assentos repetidos na compra." });
+      }
+
+      const sessao = sessoes.find(s => s.id === sessaoId);
+      if (!sessao) return sendJson(404, { error: `Sessao com ID ${sessaoId} nao encontrada.` });
+      if (sessao.status === sessoesEstado.CANCELADA || sessao.status === sessoesEstado.ENCERRADA) {
+        return sendJson(422, { error: `Nao e possivel comprar ingressos para uma sessao ${sessao.status.toLowerCase()}.` });
+      }
+      const sala = salas.find(sl => sl.id === sessao.salaId);
+
+      const selecionados = assentoIds.map(id => assentos.find(a => a.id === id));
+      if (selecionados.some(a => !a)) return sendJson(422, { error: "Um ou mais assentos informados nao existem." });
+      const foraDaSala = selecionados.find(a => a.salaId !== sessao.salaId);
+      if (foraDaSala) {
+        return sendJson(422, { error: `O assento ${foraDaSala.fileira}${foraDaSala.numero} nao pertence a sala da sessao.` });
+      }
+      const indisponivel = selecionados.find(a => a.status === 'INDISPONIVEL');
+      if (indisponivel) {
+        return sendJson(422, { error: `O assento ${indisponivel.fileira}${indisponivel.numero} esta INDISPONIVEL.` });
+      }
+
+      const jaVendidos = ingressosDaSessao(sessaoId).filter(i => i.assentoId !== undefined);
+      const vendidoMap = {};
+      jaVendidos.forEach(i => { vendidoMap[i.assentoId] = i; });
+      const conflito = assentoIds.find(id => vendidoMap[id]);
+      if (conflito) {
+        const a = vendidoMap[conflito];
+        return sendJson(422, { error: `O assento ${a.fileira}${a.numero} ja foi vendido/reservado para esta sessao.` });
+      }
+
+      const vendidos = ingressosVendidosDe(sessaoId);
+      if (vendidos + assentoIds.length > sala.capacidadeTotal) {
+        return sendJson(422, { error: `Sessao sem capacidade para ${assentoIds.length} ingressos (ocupacao ${vendidos}/${sala.capacidadeTotal}).` });
+      }
+
+      const valor = json.valor !== undefined ? Number(json.valor) : VALOR_INGRESSO;
+      if (!(valor > 0)) return sendJson(422, { error: "O valor do ingresso deve ser maior que zero." });
+
+      const agora = new Date().toISOString();
+      const criados = assentoIds.map(id => {
+        const a = assentos.find(x => x.id === id);
+        return {
+          id: ++nextIngressoId,
+          sessaoId,
+          assentoId: id,
+          fileira: a.fileira,
+          numero: a.numero,
+          nomeCliente,
+          valor,
+          status: statusIngresso.VENDIDO,
+          dataCompra: agora,
+          dataCadastro: agora,
+          dataAtualizacao: agora
+        };
+      });
+      ingressos.push(...criados);
+      if (ingressosVendidosDe(sessaoId) >= sala.capacidadeTotal && sessao.status !== sessoesEstado.CANCELADA) {
+        sessao.status = sessoesEstado.LOTADA;
+      }
+      return sendJson(201, criados);
+    }
+
+    // Ingressos: POST /api/ingressos (cadastro avulso)
+    if (pathname === '/api/ingressos' && req.method === 'POST') {
+      const sessaoId = Number(json.sessaoId);
+      const assentoId = Number(json.assentoId);
+      const sessao = sessoes.find(s => s.id === sessaoId);
+      if (!sessao) return sendJson(404, { error: `Sessao com ID ${sessaoId} nao encontrada.` });
+      const assento = assentos.find(a => a.id === assentoId);
+      if (!assento) return sendJson(404, { error: `Assento com ID ${assentoId} nao encontrado.` });
+      if (sessao.salaId !== assento.salaId) {
+        return sendJson(422, { error: `O assento ${assento.fileira}${assento.numero} nao pertence a sala da sessao.` });
+      }
+      if (ingressos.some(i => i.sessaoId === sessaoId && i.assentoId === assentoId)) {
+        return sendJson(422, { error: `O assento ${assento.fileira}${assento.numero} ja foi vendido/reservado para esta sessao.` });
+      }
+      if (!(json.nomeCliente || '').trim()) return sendJson(422, { error: "Informe o nome do cliente." });
+
+      const agora = new Date().toISOString();
+      const statusFinal = ['DISPONIVEL', 'RESERVADO', 'VENDIDO', 'UTILIZADO'].includes(json.status) ? json.status : statusIngresso.VENDIDO;
+      const novo = {
+        id: ++nextIngressoId,
+        sessaoId,
+        assentoId,
+        fileira: assento.fileira,
+        numero: assento.numero,
+        nomeCliente: json.nomeCliente.trim(),
+        valor: json.valor !== undefined ? Number(json.valor) : VALOR_INGRESSO,
+        status: statusFinal,
+        dataCompra: statusFinal === statusIngresso.VENDIDO ? agora : null,
+        dataCadastro: agora,
+        dataAtualizacao: agora
+      };
+      ingressos.push(novo);
+      return sendJson(201, novo);
+    }
+
+    // Ingressos: PUT /api/ingressos/:id
+    if (matchIngressoId && req.method === 'PUT') {
+      const id = parseInt(matchIngressoId[1], 10);
+      const idx = ingressos.findIndex(i => i.id === id);
+      if (idx === -1) return sendJson(404, { error: "Ingresso não encontrado" });
+
+      if (json.status !== undefined) ingressos[idx].status = json.status;
+      if (json.nomeCliente !== undefined) ingressos[idx].nomeCliente = String(json.nomeCliente).trim();
+      if (json.valor !== undefined) ingressos[idx].valor = Number(json.valor);
+      ingressos[idx].dataAtualizacao = new Date().toISOString();
+      return sendJson(200, ingressos[idx]);
+    }
+
+    // Ingressos: DELETE /api/ingressos/:id
+    if (matchIngressoId && req.method === 'DELETE') {
+      const id = parseInt(matchIngressoId[1], 10);
+      const idx = ingressos.findIndex(i => i.id === id);
+      if (idx === -1) return sendJson(404, { error: "Ingresso não encontrado" });
+      ingressos.splice(idx, 1);
       res.writeHead(204);
       return res.end();
     }

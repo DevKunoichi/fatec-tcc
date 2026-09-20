@@ -1,7 +1,9 @@
 package com.cinema.controllers;
 
+import com.cinema.dtos.AssentosDaSessaoDTO;
 import com.cinema.dtos.SessaoRequestDTO;
 import com.cinema.dtos.SessaoResponseDTO;
+import com.cinema.services.IngressoService;
 import com.cinema.services.SessaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,9 +17,16 @@ import java.util.List;
 public class SessaoController {
 
     private final SessaoService service;
+    private final IngressoService ingressoService;
 
-    public SessaoController(SessaoService service) {
+    public SessaoController(SessaoService service, IngressoService ingressoService) {
         this.service = service;
+        this.ingressoService = ingressoService;
+    }
+
+    @GetMapping("/{id}/assentos")
+    public ResponseEntity<AssentosDaSessaoDTO> mapaAssentos(@PathVariable Long id) {
+        return ResponseEntity.ok(ingressoService.mapaDaSessao(id));
     }
 
     @GetMapping

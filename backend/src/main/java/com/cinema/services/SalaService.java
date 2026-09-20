@@ -15,9 +15,11 @@ import java.util.List;
 public class SalaService {
 
     private final SalaRepository repository;
+    private final AssentoService assentoService;
 
-    public SalaService(SalaRepository repository) {
+    public SalaService(SalaRepository repository, AssentoService assentoService) {
         this.repository = repository;
+        this.assentoService = assentoService;
     }
 
     @Transactional(readOnly = true)
@@ -36,7 +38,9 @@ public class SalaService {
         Sala s = new Sala();
         s.setNomeNumero(dto.nomeNumero().trim());
         s.setCapacidadeTotal(dto.capacidadeTotal());
-        return SalaResponseDTO.fromEntity(repository.save(s));
+        Sala salva = repository.save(s);
+        assentoService.gerarAssentosParaSala(salva);
+        return SalaResponseDTO.fromEntity(salva);
     }
 
     @Transactional
@@ -47,7 +51,9 @@ public class SalaService {
         }
         s.setNomeNumero(dto.nomeNumero().trim());
         s.setCapacidadeTotal(dto.capacidadeTotal());
-        return SalaResponseDTO.fromEntity(repository.save(s));
+        Sala salva = repository.save(s);
+        assentoService.gerarAssentosParaSala(salva);
+        return SalaResponseDTO.fromEntity(salva);
     }
 
     @Transactional
