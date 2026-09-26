@@ -4,6 +4,7 @@ import com.cinema.dtos.*;
 import com.cinema.entities.Assento;
 import com.cinema.entities.Ingresso;
 import com.cinema.entities.Sessao;
+import com.cinema.entities.Usuario;
 import com.cinema.enums.StatusAssento;
 import com.cinema.enums.StatusIngresso;
 import com.cinema.enums.StatusSessao;
@@ -12,6 +13,8 @@ import com.cinema.exceptions.ResourceNotFoundException;
 import com.cinema.repositories.AssentoRepository;
 import com.cinema.repositories.IngressoRepository;
 import com.cinema.repositories.SessaoRepository;
+import com.cinema.repositories.UsuarioRepository;
+import com.cinema.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,13 +36,16 @@ public class IngressoService {
     private final IngressoRepository repository;
     private final SessaoRepository sessaoRepository;
     private final AssentoRepository assentoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public IngressoService(IngressoRepository repository,
                            SessaoRepository sessaoRepository,
-                           AssentoRepository assentoRepository) {
+                           AssentoRepository assentoRepository,
+                           UsuarioRepository usuarioRepository) {
         this.repository = repository;
         this.sessaoRepository = sessaoRepository;
         this.assentoRepository = assentoRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional(readOnly = true)
@@ -72,6 +79,7 @@ public class IngressoService {
             dto.valor() != null ? dto.valor() : VALOR_PADRAO,
             dto.status() != null ? dto.status() : StatusIngresso.VENDIDO
         );
+        usuarioAutenticado().ifPresent(i::setUsuario);
         Ingresso salvo = repository.save(i);
         marcarSessaoLotadaSeNecessario(sessao);
         return IngressoResponseDTO.fromEntity(salvo);
@@ -165,6 +173,7 @@ public class IngressoService {
                 .map(a -> {
                     Ingresso i = new Ingresso(null, sessao, a, cliente, valor, StatusIngresso.VENDIDO);
                     i.setDataCompra(agora);
+                    usuarioAutenticado().ifPresent(i::setUsuario);
                     return i;
                 })
                 .toList();
@@ -226,6 +235,15 @@ public class IngressoService {
             throw new RegraNegocioException("O assento " + i.getAssento().getFileira() + i.getAssento().getNumero()
                     + " ja foi vendido/reservado para esta sessao.");
         }
+    }
+
+    /**
+     * Usuario autenticado (via JWT) para vincular o ingresso a um cadastro (Fase 4).
+     * Compras avulsas/anonimas seguem apenas com nomeCliente.
+     */
+    private Optional<Usuario> usuarioAutenticado() {
+        return SecurityUtils.autenticado()
+                .flatMap(ud -> usuarioRepository.findById(ud.getUsuarioId()));
     }
 
     private void marcarSessaoLotadaSeNecessario(Sessao sessao) {

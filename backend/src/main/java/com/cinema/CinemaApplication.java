@@ -4,17 +4,21 @@ import com.cinema.entities.Filme;
 import com.cinema.entities.Produto;
 import com.cinema.entities.Sala;
 import com.cinema.entities.Sessao;
+import com.cinema.entities.Usuario;
+import com.cinema.enums.PerfilUsuario;
 import com.cinema.enums.StatusSessao;
 import com.cinema.repositories.FilmeRepository;
 import com.cinema.repositories.ProdutoRepository;
 import com.cinema.repositories.SalaRepository;
 import com.cinema.repositories.SessaoRepository;
+import com.cinema.repositories.UsuarioRepository;
 import com.cinema.services.AssentoService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -118,6 +122,28 @@ public class CinemaApplication {
                 assentoService.gerarAssentosParaSala(sala);
             }
             System.out.println(">> [SEED] Assentos das salas verificados (backfill executado).");
+        };
+    }
+
+    /**
+     * Usuario administrador inicial (Fase 4). Senha gravada com BCrypt (nunca em texto puro).
+     * Credenciais padrao: admin@cinemax.com.br / admin123
+     */
+    @Bean
+    @Order(6)
+    CommandLineRunner seedUsuarioAdmin(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
+        return args -> {
+            if (repository.count() == 0) {
+                repository.save(new Usuario(
+                    null,
+                    "Administrador Cinemax",
+                    "admin@cinemax.com.br",
+                    passwordEncoder.encode("admin123"),
+                    PerfilUsuario.ADMIN,
+                    true
+                ));
+                System.out.println(">> [SEED] Usuario admin criado (admin@cinemax.com.br / admin123).");
+            }
         };
     }
 }

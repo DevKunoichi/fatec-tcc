@@ -40,15 +40,40 @@ let nextSalaId = 4;
 
 // Usuarios em memoria. Obs.: a senha nunca e devolvida nas respostas (contrato igual ao Java).
 const usuarios = [
-  { id: 1, nome: "Andresa Paula", email: "andresa.paula@cinemax.com.br", senha: "admin123", perfil: "GERENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
-  { id: 2, nome: "Rafael Lima", email: "rafael.lima@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
-  { id: 3, nome: "Beatriz Alves", email: "beatriz.alves@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
-  { id: 4, nome: "Diego Nunes", email: "diego.nunes@cinemax.com.br", senha: "123456", perfil: "FUNCIONARIO", ativo: false, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
+  { id: 1, nome: "Administrador Cinemax", email: "admin@cinemax.com.br", senha: "admin123", perfil: "ADMIN", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 2, nome: "Andresa Paula", email: "andresa.paula@cinemax.com.br", senha: "admin123", perfil: "GERENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 3, nome: "Rafael Lima", email: "rafael.lima@cinemax.com.br", senha: "123456", perfil: "ATENDENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 4, nome: "Beatriz Alves", email: "beatriz.alves@cinemax.com.br", senha: "123456", perfil: "ATENDENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 5, nome: "Diego Nunes", email: "diego.nunes@cinemax.com.br", senha: "123456", perfil: "ATENDENTE", ativo: false, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() },
+  { id: 6, nome: "Maria Cliente", email: "maria.cliente@cinemax.com.br", senha: "123456", perfil: "CLIENTE", ativo: true, dataCadastro: new Date().toISOString(), dataAtualizacao: new Date().toISOString() }
 ];
-let nextUsuarioId = 5;
+let nextUsuarioId = 7;
+const PERFIS_VALIDOS = ['ADMIN', 'GERENTE', 'ATENDENTE', 'CLIENTE'];
 
 function toUsuarioPublico(u) {
   return { id: u.id, nome: u.nome, email: u.email, perfil: u.perfil, ativo: u.ativo, dataCadastro: u.dataCadastro, dataAtualizacao: u.dataAtualizacao };
+}
+
+// Auth mock (Fase 4): gera um JWT fake (nao assinado, apenas demo) e recupera o usuario pelo header.
+function gerarTokenMock(u) {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({
+    sub: u.email, userId: u.id, nome: u.nome, perfil: u.perfil, exp: Date.now() + 86400000
+  })).toString('base64url');
+  return `${header}.${payload}.mock-assinatura`;
+}
+function usuarioPorToken(req) {
+  const h = req.headers.authorization || '';
+  if (!h.startsWith('Bearer ')) return null;
+  const payloadB64 = h.slice(7).split('.')[1];
+  if (!payloadB64) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    const u = usuarios.find(x => x.id === payload.userId);
+    return u && u.ativo ? u : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // Fase 3 - Assentos e Ingressos (espelhando o JPA: Assento pertence a Sala; Ingresso pertence a Sessao+Assento)
@@ -261,6 +286,13 @@ const server = http.createServer((req, res) => {
     const item = usuarios.find(u => u.id === id);
     if (!item) return sendJson(404, { error: "Usuário não encontrado", id });
     return sendJson(200, toUsuarioPublico(item));
+  }
+
+  // Auth: GET /api/auth/me (usuario logado a partir do token)
+  if (pathname === '/api/auth/me' && req.method === 'GET') {
+    const u = usuarioPorToken(req);
+    if (!u) return sendJson(401, { status: 401, error: "Nao Autorizado", message: "Autentique-se para acessar este recurso." });
+    return sendJson(200, toUsuarioPublico(u));
   }
 
   // Sessoes: GET /api/sessoes/:id/assentos (mapa de assentos da sessao)
@@ -782,6 +814,24 @@ const server = http.createServer((req, res) => {
       return res.end();
     }
 
+    // Auth: POST /api/auth/login
+    if (pathname === '/api/auth/login' && req.method === 'POST') {
+      const email = String(json.email || '').trim().toLowerCase();
+      const senha = String(json.senha || '');
+      const u = usuarios.find(x => x.email.toLowerCase() === email);
+      if (!u || u.senha !== senha || !u.ativo) {
+        return sendJson(401, { status: 401, error: "Credenciais Invalidas", message: "Email ou senha invalidos." });
+      }
+      return sendJson(200, { token: gerarTokenMock(u), expiresIn: 86400000, usuario: toUsuarioPublico(u) });
+    }
+
+    // Auth: POST /api/auth/refresh (novo token a partir do atual)
+    if (pathname === '/api/auth/refresh' && req.method === 'POST') {
+      const u = usuarioPorToken(req);
+      if (!u) return sendJson(401, { status: 401, error: "Nao Autorizado", message: "Token invalido." });
+      return sendJson(200, { token: gerarTokenMock(u), expiresIn: 86400000, usuario: toUsuarioPublico(u) });
+    }
+
     // Usuarios: POST /api/usuarios
     if (pathname === '/api/usuarios' && req.method === 'POST') {
       const nome = (json.nome || '').trim();
@@ -799,7 +849,7 @@ const server = http.createServer((req, res) => {
         nome,
         email,
         senha,
-        perfil: ['GERENTE', 'ADMIN'].includes(json.perfil) ? json.perfil : 'FUNCIONARIO',
+        perfil: PERFIS_VALIDOS.includes(json.perfil) ? json.perfil : 'ATENDENTE',
         ativo: json.ativo !== undefined ? Boolean(json.ativo) : true,
         dataCadastro: agora,
         dataAtualizacao: agora
@@ -823,7 +873,7 @@ const server = http.createServer((req, res) => {
       usuarios[idx].email = email;
       const novaSenha = String(json.senha || '');
       if (novaSenha) usuarios[idx].senha = novaSenha;
-      if (json.perfil !== undefined && ['GERENTE', 'ADMIN', 'FUNCIONARIO'].includes(json.perfil)) {
+      if (json.perfil !== undefined && PERFIS_VALIDOS.includes(json.perfil)) {
         usuarios[idx].perfil = json.perfil;
       }
       if (json.ativo !== undefined) usuarios[idx].ativo = Boolean(json.ativo);
