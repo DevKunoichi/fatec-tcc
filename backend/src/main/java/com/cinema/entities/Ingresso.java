@@ -24,8 +24,13 @@ public class Ingresso {
     @JoinColumn(name = "assento_id", nullable = false)
     private Assento assento;
 
-    // Placeholder da Fase 3: Usuario ainda nao existe em JPA (Fase 4).
-    // Na Fase 4, sera substituido por ManyToOne -> Usuario.
+    // Comprador: FK opcional para Usuario (Fase 4). Quando a compra e feita por um
+    // usuario autenticado (ex.: perfil CLIENTE), o registro e vinculado; o campo
+    // nomeCliente permanece para compras avulsas/anonimas (retrocompativel).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @Column(name = "nome_cliente", nullable = false, length = 100)
     private String nomeCliente;
 
@@ -79,6 +84,9 @@ public class Ingresso {
 
     public Assento getAssento() { return assento; }
     public void setAssento(Assento assento) { this.assento = assento; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 
     public String getNomeCliente() { return nomeCliente; }
     public void setNomeCliente(String nomeCliente) { this.nomeCliente = nomeCliente; }

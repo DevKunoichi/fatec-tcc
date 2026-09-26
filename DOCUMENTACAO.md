@@ -13,7 +13,7 @@ Documentação técnica e **controle de status** do projeto (TCC — FATEC).
 
 Sistema web para gestão de um cinema: **snack bar (produtos e estoque)**, **catálogo
 de filmes** com integração à **OMDb API**, **salas** e **sessões** — com a
-arquitetura de backend evoluindo por fases (atualmente Fase 2 concluída).
+arquitetura de backend evoluindo por fases (atualmente Fase 4 concluída).
 
 Frontend em **React + Vite + Tailwind CSS**, backend duplo:
 
@@ -35,6 +35,7 @@ Frontend em **React + Vite + Tailwind CSS**, backend duplo:
 | Frontend | Axios | 1.20 |
 | Backend | Spring Boot | 3.5.16 (linha 3.x estável; Java 17) |
 | Backend | JPA / Hibernate, Bean Validation | via starter `data-jpa` / `validation` |
+| Backend | Segurança | `spring-boot-starter-security` + JJWT 0.12.6 (BCrypt, JWT HS256) |
 | Backend | Banco | H2 em memória (dev); driver PostgreSQL já no classpath |
 | Backend | Cliente HTTP (OMDb) | `RestTemplate` com timeouts |
 | Mock | Node.js (só stdlib, sem dependências) | Node ≥ 18 |
@@ -46,36 +47,41 @@ Frontend em **React + Vite + Tailwind CSS**, backend duplo:
 ```
 fatec-tcc/
 ├── backend/                          # API Java (Spring Boot) + mock Node
-│   ├── pom.xml                       # Spring Boot 3.5.16, Java 17
-│   ├── server.js                     # Mock Node (réplica do contrato REST)
+│   ├── pom.xml                       # Spring Boot 3.5.16, Java 17, + Security/JJWT
+│   ├── server.js                     # Mock Node (réplica do contrato REST + auth fake)
 │   └── src/main/
 │       ├── resources/
-│       │   └── application.properties# porta, H2, CORS, OMDb, perfis
+│       │   └── application.properties# porta, H2, CORS, OMDb, JWT, perfis
 │       └── java/com/cinema/
-│           ├── CinemaApplication.java# entry point + seeds (produtos/salas/filmes/sessoes)
+│           ├── CinemaApplication.java# entry point + seeds (produtos/salas/filmes/sessoes/assentos/admin)
 │           ├── config/
-│           │   ├── CorsConfig.java   # CORS centralizado (origens por propriedade)
+│           │   ├── CorsConfig.java   # CORS centralizado (CorsConfigurationSource p/ Security)
 │           │   ├── GlobalExceptionHandler.java # 404 / 422 / 400 em formato JSON
 │           │   └── OmdbConfig.java   # RestTemplate com timeouts
-│           ├── controllers/          # Produto, Sala, Filme, Sessao
-│           ├── dtos/                 # Record DTOs de request/response
-│           ├── entities/             # Produto, Sala, Filme, Sessao (JPA)
-│           ├── enums/StatusSessao.java
+│           ├── controllers/          # Produto, Sala, Filme, Sessao, Assento, Ingresso, Auth, Usuario
+│           ├── dtos/                 # Record DTOs de request/response (+ Login/Usuario)
+│           ├── entities/             # Produto, Sala, Filme, Sessao, Assento, Ingresso, Usuario (JPA)
+│           ├── enums/                # StatusSessao, StatusAssento, StatusIngresso, PerfilUsuario
 │           ├── exceptions/           # RegraNegocioException, ResourceNotFoundException
-│           ├── repositories/         # Spring Data JPA
-│           └── services/             # Produto, Sala, Filme, Sessao, Omdb
+│           ├── repositories/         # Spring Data JPA (+ UsuarioRepository)
+│           ├── security/             # SecurityConfig, JwtUtil, JwtAuthFilter, UserDetailsService
+│           └── services/             # Produto, Sala, Filme, Sessao, Assento, Ingresso, Omdb, Usuario
 ├── frontend/                         # React + Vite + Tailwind
 │   ├── vite.config.js                # plugin react + tailwindcss
 │   └── src/
-│       ├── App.jsx                   # Rotas (+ layout Header/Navigation)
-│       ├── services/api.js           # Axios -> http://localhost:8080/api
+│       ├── App.jsx                   # Rotas (+ login) e guards por perfil (ProtectedRoute)
+│       ├── context/AuthContext.jsx   # Estado global de autenticacao
+│       ├── services/api.js           # Axios (VITE_API_URL) + interceptador JWT
+│       ├── services/auth.js          # login/logout/sessao no localStorage
 │       ├── components/
 │       │   ├── layout/Header.jsx, Navigation.jsx
+│       │   ├── ProtectedRoute.jsx    # exige login (e perfil ADMIN quando necessario)
 │       │   └── filmes/BuscaFilmeModal.jsx  # busca OMDb + cadastro
 │       └── pages/
+│           ├── LoginPage.jsx         # tela de login (Cinemax)
 │           ├── ProdutosPage.jsx      # CRUD produtos + estoque
 │           ├── SessoesPage.jsx       # CRUD sessões + catálogo
-│           └── UsuariosPage.jsx      # placeholder "Em Desenvolvimento"
+│           └── UsuariosPage.jsx      # CRUD usuários (somente ADMIN)
 ├── diagramas/                        # SVGs (classes, conceitual, DER)
 ├── docs/                             # material de aula (crud.md, html/docx/pdf)
 ├── .gitignore                        # segredos, build, artefatos temporários
@@ -162,6 +168,47 @@ campos `datetime-local` (início/fim), badge e select de status, ocupação
 - `ingressosVendidos` e `vagasDisponiveis` da sessão passam a ser **reais**, e o
   status **LOTADA** é aplicado automaticamente quando a sala lota.
 
+### 4.6 Fase 4 — Usuários + Segurança (Spring Security + JWT)
+
+**Entidade `Usuario` (JPA)** — `id`, `nome`, `email` (unique, normalizado em
+minúsculas), `senhaHash` (**BCrypt**, nunca em texto puro), `perfil` (enum
+`PerfilUsuario`: `ADMIN`, `GERENTE`, `ATENDENTE`, `CLIENTE`), `ativo`,
+timestamps. A senha **nunca** é devolvida em nenhuma resposta. O PUT é
+**parcial** (`UsuarioUpdateDTO` — campos opcionais, mesmo comportamento do mock).
+
+**Autenticação JWT (stateless):**
+- `security/SecurityConfig` — CSRF off, sessão stateless, CORS integrado ao
+  Spring Security, rotas `/api/auth/**` abertas, `/api/usuarios/**` **somente
+  ADMIN**, demais `/api/**` exigem login; 401/403 em JSON no padrão do projeto.
+- `security/JwtUtil` — HS256 com `jwt.secret` (`${JWT_SECRET:...}`) e
+  `jwt.expiration` (`${JWT_EXPIRATION:86400000}`); claims: `sub` (email),
+  `userId`, `nome`, `perfil`.
+- `security/JwtAuthFilter` — lê `Authorization: Bearer`, valida e popula o
+  contexto; usuário **desativado** perde o acesso imediatamente.
+- `security/CustomUserDetailsService` + `AuthUserDetails` — carrega por email,
+  negando login de usuário inativo.
+- `POST /api/auth/login` → `{token, expiresIn, usuario}`; `GET /api/auth/me`
+  → usuário do token; `POST /api/auth/refresh` → novo token.
+- Seed `@Order(6)`: **admin@cinemax.com.br / admin123** (ADMIN).
+
+**Ingresso × Usuario:** `Ingresso.usuario` vira FK **opcional** (`usuario_id`).
+Compras feitas por usuário autenticado ficam vinculadas; o `nomeCliente`
+permanece para compras avulsas (retrocompatível com o mock).
+
+**Frontend:**
+- `LoginPage.jsx` — tela de login com a identidade Cinemax; redireciona para a
+  rota de origem após entrar.
+- `context/AuthContext` + `services/auth.js` — sessão em `localStorage`,
+  interceptador Axios anexa `Bearer`, e **401 → volta para o login**.
+- Rotas protegidas via `ProtectedRoute` (`/usuarios` exige `ADMIN`); a aba
+  "Usuários" só aparece para administradores; header mostra nome/perfil do
+  usuário logado + botão "Sair".
+- `api.js` agora lê `VITE_API_URL` (fallback `http://localhost:8080/api`).
+
+**Mock Node** — endpoints de auth fake (`/api/auth/login`, `/api/auth/me`,
+`/api/auth/refresh`) e enum de perfis alinhado (`ADMIN/GERENTE/ATENDENTE/CLIENTE`),
+incluindo usuário admin para a demo sem o Java.
+
 ---
 
 ## 5. API — Resumo de Endpoints
@@ -190,7 +237,18 @@ campos `datetime-local` (início/fim), badge e select de status, ocupação
 | POST | `/api/ingressos` | ✅ | ✅ | avulso |
 | POST | `/api/ingressos/comprar` | ✅ | ✅ | lote; assento já vendido 422 |
 | PUT/DELETE | `/api/ingressos/{id}` | ✅ | ✅ | |
-| POST | `/api/auth/login` | ❌ | ❌ | irá na Fase 4 |
+| POST | `/api/auth/login` | ✅ (JWT) | ✅ (fake) | retorna token + usuário |
+| GET | `/api/auth/me` | ✅ | ✅ | usuário do token |
+| POST | `/api/auth/refresh` | ✅ | ✅ | renova token |
+| GET/POST | `/api/usuarios` | ✅ (ADMIN) | ✅ | lista busca / cria |
+| PUT/DELETE | `/api/usuarios/{id}` | ✅ (ADMIN) | ✅ | atualiza / exclui (não o próprio) |
+
+**Regras de acesso (Fase 4):**
+- `/api/auth/login`, `/api/auth/refresh` e `/api/usuarios/**` (ADMIN) são os
+  únicos caminhos especiais; todo o restante `/api/**` exige `Authorization: Bearer <token>`.
+- Usuário **inativo** não consegue logar nem acessar com token existente.
+- Respostas de erro de segurança em JSON: `401` (não autenticado) e `403`
+  (sem permissão), mesmo formato do `GlobalExceptionHandler`.
 
 **Formato de erro padrão (Java)** — `GlobalExceptionHandler`:
 - `404` → `{"timestamp","status":404,"error":"Recurso Nao Encontrado","message":...}`
@@ -335,8 +393,10 @@ relacionada à conta GitHub.
 - [x] Fix `/produtos` (página em branco) + `ErrorBoundary` — `95aef6e`
 - [x] **Demo dos 3 CRUDs**: CRUD de Usuários no mock + contadores dinâmicos — `d0b2abf` + `b1375e9`
 - [x] **Fase 3** — Assentos + Ingressos (mapa, compra, LOTADA) — `70439da`
+- [x] **Fase 4** — Usuários + Segurança (Spring Security + JWT, login/me/refresh,
+  CRUD admin, BCrypt, seed admin, rotas protegidas no frontend, auth no mock)
 
-**Entidades na API Java: 6 de 9 (67%)** — Produto, Sala, Filme, Sessao, Assento, Ingresso.
+**Entidades na API Java: 7 de 9 (78%)** — Produto, Sala, Filme, Sessao, Assento, Ingresso, Usuario.
 
 ### ⏳ Pendências operacionais
 | # | Item | Detalhe |
@@ -348,33 +408,35 @@ relacionada à conta GitHub.
 | 5 | **Banco persistente** | H2 em memória hoje; PostgreSQL planejado na Fase 6. |
 
 ### 🔧 Melhorias mapeadas (auditoria) — status aberto
-- **Alta:** API sem autenticação → Fase 4 (Spring Security + JWT).
+- **Alta:** ~~API sem autenticação~~ → **resolvido na Fase 4** (Spring Security + JWT).
 - **Média:** tratamento de exceções incompleto (handlers p/ `DataIntegrityViolationException`,
   `HttpMessageNotReadableException`, fallback `Exception`, logs) — aplicar o quanto antes;
   `ddl-auto=update` + perfis dev/prod → Fase 6; H2 perder dados ao reiniciar → Fase 6;
   `show-sql=true` mover p/ perfil dev → Fase 6.
-- **Média (frontend):** `baseURL` fixo `http://localhost:8080/api` (trocar por
-  `VITE_API_URL`); erros de fetch só `console.error`; labels sem `htmlFor`/a11y;
-  `lucide-react` instalado e não usado; ESLint sem config; nome `temp-react` no
-  `package.json`/`index.html`.
+- **Média (frontend):** ~~`baseURL` fixo~~ → **resolvido** (`VITE_API_URL` com fallback);
+  erros de fetch só `console.error` (parcial: UsuariosPage agora exibe erro); labels
+  sem `htmlFor`/a11y (parcial: LoginPage já usa); `lucide-react` instalado e não usado;
+  ESLint sem config; nome `temp-react` no `package.json`/`index.html` (Fase 6).
 - **Média (mock):** divergências menores de contrato (PUT filmes/salas ausentes no mock,
   sala duplicada aceita, JSON inválido engolido, body sem limite).
 - **Média (docs):** `docs/crud.md` com referências quebradas.
 
 ### 🚀 Próximas fases
-- **Fase 4 — Usuários + Segurança (Java):** entidade `Usuario` (hoje só no mock),
-  Spring Security + JWT, `/api/auth/login`, senhas BCrypt, rotas protegidas; o
-  `nomeCliente` do Ingresso passa a ser FK `Usuario`.
 - **Fase 5 — Estoque audit + Pedidos:** `MovimentacaoEstoque` (auditoria) e
   `PedidoVenda` + relatórios.
 - **Fase 6 — Infraestrutura e Limpeza:** perfis dev/prod, PostgreSQL + Flyway,
-  handlers de exceção, `VITE_API_URL`, ESLint, renomear `temp-react`, corrigir docs.
+  handlers de exceção, ESLint, renomear `temp-react`, corrigir docs.
 
 ---
 
 ## 11. Notas de Segurança (aplicadas)
 
 - Chave OMDb só via variável de ambiente / propriedade; **nunca** em resposta, log ou repositório.
+- **JWT:** `jwt.secret` via `${JWT_SECRET:...}` (default apenas para dev, ≥ 32 chars);
+  `jwt.expiration` via `${JWT_EXPIRATION:86400000}`; **definir `JWT_SECRET` real em produção**.
+- Senhas de usuário gravadas com **BCrypt**; nunca devolvidas pela API.
+- Rotas mutáveis protegidas por login; `/api/usuarios/**` exclusivo de **ADMIN**.
+- Usuário desativado (`ativo=false`) não loga nem mantém acesso via token.
 - CORS restrito a origens configuradas (403 para o resto).
 - H2 console sem acesso remoto.
 - `.gitignore` cobre `.env*`, `*.local`, builds, `node_modules`, artefatos temporários.
@@ -382,4 +444,4 @@ relacionada à conta GitHub.
 
 ---
 
-*Documentação criada em 2026-09-19. Última atualização acompanha o commit `ebb90ec` (Fase 2).*
+*Documentação criada em 2026-09-19. Última atualização acompanha a Fase 4 (Usuários + Segurança — branch `feat/fase4-usuarios-seguranca`).*

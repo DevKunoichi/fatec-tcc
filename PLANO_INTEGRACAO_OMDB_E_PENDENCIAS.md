@@ -3,7 +3,7 @@
 **Projeto:** Sistema de Gerenciamento Integrado para Cinemas (Cinemax)
 **Data original:** 2026-09-17
 **Última atualização:** 2026-09-19
-**Status:** Em andamento — Fase 1 ✅, Fase 2 ✅ e Fase 3 ✅ concluídas e commitadas; demo com CRUD de Usuários no mock ✅; aguardando chave OMDb para teste real da busca; próximo passo: Fase 4
+**Status:** Em andamento — Fase 1 ✅, Fase 2 ✅, Fase 3 ✅ e Fase 4 ✅ concluídas; demo com CRUD de Usuários no mock ✅; aguardando chave OMDb para teste real da busca; próximo passo: Fase 5
 
 ---
 
@@ -52,7 +52,35 @@
 
 **Próximos achados da auditoria a resolver (fora do lote "Agora", a combinar):**
 
-- **[Alta] API sem autenticação** — mutadores expostos (CORS já restrito); resolver na Fase 4 (Spring Security + JWT).
+### ✅ Concluído — 2026-09-26 · Fase 4 — Usuários + Segurança (Spring Security + JWT)
+
+Branch: `feat/fase4-usuarios-seguranca` (parte Java + frontend + mock)
+- Backend Java: `Usuario` (JPA), `PerfilUsuario` (ADMIN/GERENTE/ATENDENTE/CLIENTE),
+  `UsuarioRepository`, DTOs (`UsuarioRequestDTO`/`UsuarioUpdateDTO`/`ResponseDTO`,
+  `LoginRequestDTO`/`LoginResponseDTO`),
+  `UsuarioService` (CRUD, email único 422, senha BCrypt; PUT **parcial** via
+  `UsuarioUpdateDTO` — alinhado ao mock, descoberto no smoke test),
+  `security/` (`SecurityConfig`, `JwtUtil` HS256, `JwtAuthFilter`, `CustomUserDetailsService`,
+  `AuthUserDetails`, `SecurityUtils`), `AuthController` (`/api/auth/login`, `/me`, `/refresh`),
+  `UsuarioController` (`/api/usuarios` — somente ADMIN; impede auto-exclusão).
+- `pom.xml`: `spring-boot-starter-security` + `jjwt-api/impl/jackson 0.12.6`.
+- `application.properties`: `jwt.secret=${JWT_SECRET:...}`, `jwt.expiration=${JWT_EXPIRATION:86400000}`.
+- `CorsConfig` migrado para `CorsConfigurationSource` (integração com o filtro CORS do Security).
+- Seed `@Order(6)`: admin@cinemax.com.br / admin123 (BCrypt).
+- `Ingresso.usuario` → FK **opcional** (compra autenticada vincula o usuário; `nomeCliente`
+  mantido para compras avulsas — retrocompatível).
+- Mock Node: `/api/auth/login`, `/api/auth/me`, `/api/auth/refresh` (token fake) + perfis
+  alinhados (`ADMIN/GERENTE/ATENDENTE/CLIENTE`) e usuário admin demo.
+- Frontend: `LoginPage`, `AuthContext`, `ProtectedRoute` (login + adminOnly),
+  interceptador Axios com Bearer e redirecionamento em 401, `VITE_API_URL` no `api.js`,
+  header com usuário logado + "Sair", aba Usuários só para ADMIN, `UsuariosPage` alinhado
+  ao novo enum (+ mensagem de erro visível).
+- **Validado:** revisão de código de todos os arquivos (compilação fica na máquina do
+  usuário — ferramentas de build indisponíveis nesta sessão).
+
+**Pendências p/ Fase 4 — observação registrada:** o plano previa `nomeCliente` do Ingresso
+virar FK obrigatória de `Usuario`; foi implementado como FK **opcional** (compras avulsas
+continuam permitidas), mantendo compatibilidade com o mock e com o fluxo atual de compra.
 - **[Média] `ddl-auto=update` + perfis dev/prod** — config PostgreSQL comentada no properties principal; separar profiles e migrações na Fase 6.
 - **[Média] H2 em memória** perde dados ao reiniciar; `show-sql=true` no properties principal (mover p/ dev).
 - **[Média] Tratamento de exceções incompleto** — sem fallback `Exception` e sem handler para `DataIntegrityViolationException`/`HttpMessageNotReadableException` (500 genérico em duplicidade de `imdb_id`/`nome_numero`); sem logging das exceções.
@@ -183,11 +211,11 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 | 4 | **Sessao** | ✅ Completo (Fase 2) | ✅ (Fase 2) | ✅ CRUD completo | ✅ filme_id FK, sala_id FK, data_hora_inicio, data_hora_fim |
 | 5 | **Assento** | ❌ | ❌ | ❌ | ✅ sala_id FK, fileira, numero |
 | 6 | **Ingresso** | ❌ | ❌ | ❌ | ✅ sessao_id FK, assento_id FK, usuario_id FK, valor, status |
-| 7 | **Usuario** | ❌ | ❌ | ❌ Placeholder | ✅ nome, email, senha_hash, perfil |
+| 7 | **Usuario** | ✅ (Fase 4) | ✅ (auth + CRUD) | ✅ LoginPage + UsuariosPage | ✅ nome, email, senha_hash, perfil |
 | 8 | **MovimentacaoEstoque** | ❌ (só DTO) | ❌ (só DTO) | ❌ | ✅ produto_id FK, tipo, quantidade, data |
 | 9 | **PedidoVenda** | ❌ | ❌ | ❌ | ✅ usuario_id FK, valor_total, forma_pagamento, data_venda |
 
-**Status: 6 de 9 entidades implementadas na API Java (67%)**
+**Status: 7 de 9 entidades implementadas na API Java (78%)**
 
 ### 2.2 Frontend: Status das Pages
 
@@ -219,16 +247,17 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 | `POST /api/salas` | crud.md 4.2 | ✅ Java + Node.js |
 | `PUT /api/salas/{id}` | crud.md 4.2 | ✅ Java + Node.js |
 | `DELETE /api/salas/{id}` | crud.md 4.2 | ✅ Java + Node.js |
-| `GET /api/sessoes/{id}/assentos` | crud.md 4.3 | ❌ |
-| `POST /api/ingressos/comprar` | crud.md 4.3 | ❌ |
-| `POST /api/auth/login` | crud.md 4.1 | ❌ |
-| `POST /api/usuarios` | crud.md 4.1 | ❌ |
+| `GET /api/sessoes/{id}/assentos` | crud.md 4.3 | ✅ (Fase 3) |
+| `POST /api/ingressos/comprar` | crud.md 4.3 | ✅ (Fase 3) |
+| `POST /api/auth/login` | crud.md 4.1 | ✅ (Fase 4 — JWT) |
+| `GET /api/auth/me` · `POST /api/auth/refresh` | Fase 4 | ✅ (novos) |
+| `POST /api/usuarios` | crud.md 4.1 | ✅ (Fase 4 — ADMIN) |
 
 ### 2.4 Lacunas Arquiteturais
 
 | Item | Planejado em | Status |
 |------|-------------|--------|
-| Spring Security + JWT | crud.md linha 9 | ❌ Nenhum código |
+| Spring Security + JWT | crud.md linha 9 | ✅ Implementado (Fase 4) |
 | Flyway/Liquibase (migrations) | crud.md linha 10 | ❌ Usa `ddl-auto=update` |
 | PostgreSQL (produção) | application.properties | ❌ Configurado mas comentado |
 | H2 (desenvolvimento) | application.properties | ✅ Funcional |
@@ -348,30 +377,34 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 
 **Objetivo:** Autenticação e controle de acesso.
 
-> A **demo no mock** do CRUD de usuários já está pronta (branch `feat/demo-usuarios-mock`,
-> commits `d0b2abf`/`b1375e9`). Esta fase implementa a **parte Java** (entidade + segurança).
+> **Implementada** na branch `feat/fase4-usuarios-seguranca` (parte Java + mock + frontend).
+> A demo do CRUD de usuários no mock (commits `d0b2abf`/`b1375e9`) serviu de contrato
+> de referência para a parte Java.
 
 **Backend:**
-- [ ] `Usuario.java` — Entity JPA: `id`, `nome`, `email` (unique), `senhaHash`, `perfil` (enum: ADMIN, GERENTE, ATENDENTE, CLIENTE), `ativo`, `dataCadastro`
-- [ ] `PerfilUsuario` enum — valores do DER
-- [ ] Spring Security:
-  - [ ] Dependência `spring-boot-starter-security` no `pom.xml`
-  - [ ] `SecurityConfig.java` — configurar URLs públicas vs protegidas
-  - [ ] `JwtUtil.java` — gerar/validar tokens JWT
-  - [ ] `JwtAuthFilter.java` — filtro de autenticação
-  - [ ] `CustomUserDetailsService.java` — carregar usuário por email
-- [ ] `AuthController.java`:
-  - `POST /api/auth/login` — retorna JWT token
-  - `POST /api/auth/refresh` — renovar token
-- [ ] `UsuarioController.java` — CRUD (apenas ADMIN pode gerenciar)
-- [ ] Senhas com BCrypt
-- [ ] Seed: 1 usuário admin (admin@cinemax.com / admin123)
+- [x] `Usuario.java` — Entity JPA: `id`, `nome`, `email` (unique), `senhaHash`, `perfil` (enum: ADMIN, GERENTE, ATENDENTE, CLIENTE), `ativo`, `dataCadastro`
+- [x] `PerfilUsuario` enum — valores do DER (ADMIN / GERENTE / ATENDENTE / CLIENTE)
+- [x] Spring Security:
+  - [x] Dependência `spring-boot-starter-security` no `pom.xml`
+  - [x] `SecurityConfig.java` — URLs públicas (/api/auth/login, /api/auth/refresh, /h2-console) vs protegidas (o restante); `/api/usuarios/**` ADMIN
+  - [x] `JwtUtil.java` — gerar/validar tokens JWT (HS256, claims sub/userId/nome/perfil)
+  - [x] `JwtAuthFilter.java` — filtro de autenticação (Bearer)
+  - [x] `CustomUserDetailsService.java` — carregar usuário por email (inativo não loga)
+- [x] `AuthController.java`:
+  - [x] `POST /api/auth/login` — retorna JWT token
+  - [x] `POST /api/auth/refresh` — renovar token
+  - [x] `GET /api/auth/me` — usuário do token (extra)
+- [x] `UsuarioController.java` — CRUD (apenas ADMIN pode gerenciar; ninguém exclui a si mesmo)
+- [x] Senhas com BCrypt
+- [x] Seed: 1 usuário admin (admin@cinemax.com.br / admin123) — `@Order(6)`
+- [x] `Ingresso.usuario` → FK opcional (compra autenticada vincula usuário; `nomeCliente` mantido p/ avulsas)
 
 **Frontend:**
-- [ ] Página `LoginPage.jsx`
-- [ ] Interceptador Axios para enviar JWT no header
-- [ ] Roteamento protegido (rotas por perfil)
-- [ ] Exibir nome do usuário logado no Header
+- [x] Página `LoginPage.jsx`
+- [x] Interceptador Axios para enviar JWT no header (+ 401 → volta ao login)
+- [x] Roteamento protegido (`ProtectedRoute`; `/usuarios` exige ADMIN; aba oculta p/ não-admin)
+- [x] Exibir nome do usuário logado no Header + botão "Sair"
+- [x] `api.js` com `VITE_API_URL` (fallback localhost:8080)
 
 ---
 
@@ -422,13 +455,13 @@ Frontend (busca) → Backend (OmdbService) → OMDb API
 ## 4. Ordem de Execução Recomendada
 
 ```
-Fase 1 (Sala + Filme + OMDb)
+Fase 1 (Sala + Filme + OMDb) ✅
   ↓
-Fase 2 (Sessão normalizada)
+Fase 2 (Sessão normalizada) ✅
   ↓
-Fase 3 (Assentos + Ingressos)
+Fase 3 (Assentos + Ingressos) ✅
   ↓
-Fase 4 (Usuários + Security)
+Fase 4 (Usuários + Security) ✅
   ↓
 Fase 5 (Estoque audit + Pedidos + Relatórios)
   ↓
@@ -608,4 +641,4 @@ O `application.properties` **não muda** nas duas opções — permanece `omdb.a
 
 ---
 
-*Plano original criado em 2026-09-17. Atualizado em 2026-09-20 (Fase 3 — Assentos + Ingressos — concluída no sprint `70439da`; demo com 3 CRUDs no mock em `d0b2abf`/`b1375e9`; Fases 1 e 2 nos sprints `7c2c2a1`/`e27e894`/`033c22e`/`ebb90ec`). Próximo passo: Fase 4 (Usuários + Segurança no Java) — dependente do teste do usuário + chave OMDb.*
+*Plano original criado em 2026-09-17. Atualizado em 2026-09-26 (Fase 4 — Usuários + Segurança — concluída na branch `feat/fase4-usuarios-seguranca`; Fases 1-3 nos sprints `7c2c2a1`/`ebb90ec`/`70439da`). Próximo passo: Fase 5 (MovimentacaoEstoque + PedidoVenda + Relatórios).*

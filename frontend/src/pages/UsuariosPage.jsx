@@ -4,12 +4,14 @@ import api from '../services/api';
 const PERFIL_STYLE = {
   ADMIN: 'bg-purple-100 text-purple-700',
   GERENTE: 'bg-emerald-100 text-emerald-700',
-  FUNCIONARIO: 'bg-sky-100 text-sky-700'
+  ATENDENTE: 'bg-sky-100 text-sky-700',
+  CLIENTE: 'bg-amber-100 text-amber-700'
 };
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +21,7 @@ const UsuariosPage = () => {
     nome: '',
     email: '',
     senha: '',
-    perfil: 'FUNCIONARIO',
+    perfil: 'ATENDENTE',
     ativo: true
   });
 
@@ -30,11 +32,14 @@ const UsuariosPage = () => {
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
+      setErro('');
       const params = busca.trim() ? { params: { busca: busca.trim() } } : {};
       const response = await api.get('/usuarios', params);
       setUsuarios(response.data);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
+      setErro(error.response?.data?.message || 'Não foi possível carregar os usuários.');
+      setUsuarios([]);
     } finally {
       setLoading(false);
     }
@@ -52,7 +57,7 @@ const UsuariosPage = () => {
         ativo: usuario.ativo
       });
     } else {
-      setFormData({ id: null, nome: '', email: '', senha: '', perfil: 'FUNCIONARIO', ativo: true });
+      setFormData({ id: null, nome: '', email: '', senha: '', perfil: 'ATENDENTE', ativo: true });
     }
     setIsModalOpen(true);
   };
@@ -98,6 +103,23 @@ const UsuariosPage = () => {
 
   if (loading && usuarios.length === 0) {
     return <div className="p-8 text-center">Carregando usuários...</div>;
+  }
+
+  if (erro && usuarios.length === 0) {
+    return (
+      <div>
+        <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
+          <div>
+            <div className="text-[#1B4BA0] text-[10.5px] uppercase tracking-wider mb-2 font-bold">CRUD 03 · RF005 / RF006</div>
+            <h1 className="text-3xl font-extrabold text-[#16295B] m-0">Usuários do sistema</h1>
+            <p className="text-gray-600 mt-2">Gerenciamento de acessos e permissões.</p>
+          </div>
+        </div>
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded p-5 text-sm">
+          {erro}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -212,9 +234,10 @@ const UsuariosPage = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Perfil</label>
                     <select name="perfil" value={formData.perfil} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4BA0]">
-                      <option value="FUNCIONARIO">Funcionário</option>
+                      <option value="ATENDENTE">Atendente</option>
                       <option value="GERENTE">Gerente</option>
                       <option value="ADMIN">Administrador</option>
+                      <option value="CLIENTE">Cliente</option>
                     </select>
                   </div>
                   <div className="flex items-end pb-1">

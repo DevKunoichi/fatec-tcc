@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { key: 'sessoes', path: '/', num: '01', label: 'Sessões', endpoint: '/sessoes' },
   { key: 'produtos', path: '/produtos', num: '02', label: 'Produtos & estoque', endpoint: '/produtos' },
-  { key: 'usuarios', path: '/usuarios', num: '03', label: 'Usuários', endpoint: '/usuarios' }
+  { key: 'usuarios', path: '/usuarios', num: '03', label: 'Usuários', endpoint: '/usuarios', adminOnly: true }
 ];
 
 const Navigation = () => {
+  const { user } = useAuth();
   const [counts, setCounts] = useState(() => ({ sessoes: null, produtos: null, usuarios: null }));
 
   useEffect(() => {
@@ -27,12 +29,14 @@ const Navigation = () => {
     };
     loadCounts();
     return () => { active = false; };
-  }, []);
+  }, [user?.perfil]);
+
+  const itensVisiveis = navItems.filter(t => !t.adminOnly || user?.perfil === 'ADMIN');
 
   return (
     <nav style={{ background: '#FFFFFF', padding: '0 40px', borderBottom: '1px solid #D5DEEA' }}>
       <div style={{ maxWidth: '1520px', margin: '0 auto', display: 'flex', gap: 0 }}>
-        {navItems.map(t => (
+        {itensVisiveis.map(t => (
           <NavLink
             key={t.key}
             to={t.path}
