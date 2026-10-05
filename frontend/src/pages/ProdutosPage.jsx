@@ -23,7 +23,7 @@ const ProdutosPage = () => {
 
   useEffect(() => {
     fetchProdutos();
-  }, [fetchProdutos]);
+  }, []);
 
   const fetchProdutos = React.useCallback(async () => {
     try {
