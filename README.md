@@ -1,6 +1,6 @@
 # 🎬 CRUD Cinema - Sistema de Bilheteria e Estoque
 
-Este é o repositório do sistema de gestão para cinemas (Cine Novelino), contendo a aplicação frontend moderna desenvolvida com React e Vite, além da integração com a API de backend.
+Este é o repositório do sistema de gestão para cinemas (Cinemax), contendo a aplicação frontend moderna desenvolvida com React e Vite, além da integração com a API de backend.
 
 ## 🚀 Tecnologias Utilizadas
 
