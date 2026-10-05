@@ -403,7 +403,7 @@ relacionada à conta GitHub.
 |---|------|---------|
 | 1 | **Chave OMDb** | Aguardando a DevKunoichi fornecer a chave gratuita (https://www.omdbapi.com/apikey.aspx). |
 | 2 | **Decisão: onde guardar a chave** | Opção A (recomendada): `spring-dotenv` + `backend/.env` gitignored. Opção B: variável de ambiente do SO. |
-| 3 | **Push das branches** | Chave SSH local (`Leporoni`) sem permissão de escrita no repo `DevKunoichi/fatec-tcc`. Resolver: adicionar Leporoni como colaborador **ou** fork + PR. |
+| 3 | **Push das branches** | Chave SSH local sem permissão de escrita no repo `DevKunoichi/fatec-tcc`. |
 | 4 | **Teste do usuário** | Rodar localmente (frontend + mock na 8080 ou Java). |
 | 5 | **Banco persistente** | H2 em memória hoje; PostgreSQL planejado na Fase 6. |
 
