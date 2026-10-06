@@ -1,0 +1,3 @@
+branch atual                 -> feat/fase4-usuarios-seguranca       20260926
+
+OBS: realizado merge da branch atual para branch main 20261005
